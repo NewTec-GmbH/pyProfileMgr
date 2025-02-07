@@ -7,8 +7,6 @@ update of local profiles to store Jira, Polarion or Superset server and credenti
 
 - [Overview](#overview)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Examples](#examples)
 - [SW Documentation](#sw-documentation)
 - [Used Libraries](#used-libraries)
 - [Issues, Ideas And Bugs](#issues-ideas-and-bugs)
