@@ -257,9 +257,8 @@ class FileHandler:
         ret_status = Ret.CODE.RET_OK
 
         try:
-            self._file = open(self._path, mode=file_mode,
-                              encoding='utf-8')  # pylint: disable=consider-using-with
-
+            # pylint: disable=consider-using-with
+            self._file = open(self._path, mode=file_mode, encoding='utf-8')
         except (OSError, FileNotFoundError, IOError) as e:
             # print exception
             print(str(e))
