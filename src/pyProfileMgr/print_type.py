@@ -1,6 +1,6 @@
-""" Contains the print error function and 
-    the error messages corresponding to 
-    the exit codes."""
+"""  The different print msg types
+     (error, warning, info).
+"""
 
 # BSD 3-Clause License
 #
@@ -34,81 +34,20 @@
 ################################################################################
 # Imports
 ################################################################################
-from colorama import Fore, Style
-
-from pyProfileMgr.print_type import PrintType
-from pyProfileMgr.ret import Ret, Warnings
-
+from enum import IntEnum
 ################################################################################
 # Variables
 ################################################################################
-COLOR = {
-    PrintType.ERROR: Fore.RED,
-    PrintType.WARNING: Fore.YELLOW,
-    PrintType.INFO: Fore.WHITE
-}
 
-TYPE = {
-    PrintType.ERROR: "Error",
-    PrintType.WARNING: "Warning",
-    PrintType.INFO: "Info"
-}
-
-INFO_TAB = "      "
 ################################################################################
 # Classes
 ################################################################################
-
-
-class Printer:
-    """ The printer class.
-        Prints errors, warnings and infos. 
-        Infos and warnings are only printed,
-        if verbose mode is set.
+class PrintType(IntEnum):
+    """ Different Printer Information Types.
     """
-    _print_verbose = False
-
-    def __init__(self):
-        pass
-
-    @classmethod
-    def set_verbose(cls):
-        """Set verbose mode for all instances of the class."""
-        cls._print_verbose = True
-
-    def print_error(self, err_type: PrintType, error: Ret = Ret.CODE.RET_OK) -> None:
-        """ Print the exit error.
-
-        Args:
-            type (PrintType)    The type of the msg (Error, Warning or Info).
-            error (Ret):        The return code for which an error shall be printed.
-        """
-        if err_type is PrintType.WARNING and \
-           self._print_verbose:
-            print(COLOR[err_type] + TYPE[err_type] + ": " +
-                  Style.RESET_ALL + Warnings.MSG[error])
-
-        elif err_type is PrintType.ERROR:
-            print(COLOR[err_type] + TYPE[err_type] + ": " +
-                  Style.RESET_ALL + Ret.MSG[error])
-
-    def print_info(self, *args: str) -> None:
-        """ Print the information to the console.
-
-        Args:
-            args (*str):          The information that will be printed.
-        """
-        first_line = True
-
-        if self._print_verbose:
-            for arg in args:
-                if first_line:
-                    print("Info: " + arg)
-                    first_line = False
-
-                else:
-                    print(INFO_TAB + arg)
-
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
 ################################################################################
 # Functions
 ################################################################################
