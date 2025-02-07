@@ -9,7 +9,7 @@ sys.path.append(os.path.relpath('./'))
 import update_doc_from_src as update_doc  # NOQA pylint: disable=C0413
 
 # Customize to your source code location
-sys.path.insert(0, os.path.abspath('../../src/template_python'))
+sys.path.insert(0, os.path.abspath('../../src/pyProfileMgr'))
 sys.path.insert(0, os.path.abspath('../../tests'))
 
 # Update Overview from ./README
@@ -30,7 +30,7 @@ update_doc.update_pylint()
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'template_python'
+project = 'pyProfileMgr'
 copyright = '%Y, NewTec GmbH'
 author = '???Author???'
 release = 'V0.???'

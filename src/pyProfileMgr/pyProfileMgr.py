@@ -6,7 +6,7 @@ Author: Name (mail)
 """
 
 # *******************************************************************************
-# Copyright (c) NewTec GmbH 2024   -   www.newtec.de
+# Copyright (c) NewTec GmbH 2025   -   www.newtec.de
 # *******************************************************************************
 
 # Imports **********************************************************************
@@ -15,7 +15,7 @@ import sys
 import logging
 
 try:
-    from template_python.version import __version__, __author__, __email__, __repository__, __license__
+    from pyProfileMgr.version import __version__, __author__, __email__, __repository__, __license__
 except ModuleNotFoundError:
     # provide dummy information when not installed as package but called directly
     # also necessary to get sphinx running without error
