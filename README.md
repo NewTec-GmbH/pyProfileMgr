@@ -1,6 +1,6 @@
 # pyProfileMgr <!-- omit in toc -->
 
-pyProfileMgr is a Python module containing the Profile Manager component and CLI to it. 
+pyProfileMgr is a Python module containing the Profile Manager component and CLI to it.
 
 The module encapsulates reading, writing, listing and updating local profiles that store
 Jira, Polarion and/or Superset server and credentials information.

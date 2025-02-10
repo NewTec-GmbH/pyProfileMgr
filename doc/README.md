@@ -11,7 +11,7 @@ left to right direction
 
 actor user as user
 
-package Usescases{
+package Usecases{
     usecase UC_help as "print command overview to console"
     usecase UC_import as "import something"
     usecase UC_export as "export something"
