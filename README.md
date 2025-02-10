@@ -1,7 +1,9 @@
-# NewTec Python Template <!-- omit in toc -->
+# pyProfileMgr <!-- omit in toc -->
 
-pyProfileMgr is a Python library containing the Profile Manager component, encapsulating read/write and
-update of local profiles to store Jira, Polarion or Superset server and credentials information.
+pyProfileMgr is a Python module containing the Profile Manager component and CLI to it. 
+
+The module encapsulates reading, writing, listing and updating local profiles that store
+Jira, Polarion and/or Superset server and credentials information.
 
 [![License](https://img.shields.io/badge/license-bsd-3.svg)](https://choosealicense.com/licenses/bsd-3-clause/) [![Repo Status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip) [![CI](https://github.com/NewTec-GmbH/pyProfileMgr/actions/workflows/test.yml/badge.svg)](https://github.com/NewTec-GmbH/pyProfileMgr/actions/workflows/test.yml)
 
