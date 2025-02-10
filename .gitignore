@@ -58,6 +58,9 @@ cover/
 *.mo
 *.pot
 
+# vscode workspace
+.vscode/
+
 # Django stuff:
 *.log
 local_settings.py
