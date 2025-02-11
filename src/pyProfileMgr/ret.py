@@ -62,7 +62,6 @@ class Ret():
         RET_ERROR_CREATING_TICKET_FAILED = 10
         RET_ERROR_INVALID_SEARCH = 11
         RET_ERROR_INVALID_URL = 12
-        RET_ERROR_JIRA_LOGIN = 13
         RET_ERROR_BOARD_NOT_FOUND = 14
         RET_ERROR_PROFILE_ALREADY_EXISTS = 15
         RET_ERROR_INVALID_PROFILE_TYPE = 16
@@ -84,7 +83,6 @@ class Ret():
         CODE.RET_ERROR_CREATING_TICKET_FAILED: "creating the ticket on the Jira server failed",
         CODE.RET_ERROR_INVALID_SEARCH:         "search string returned a Jira error",
         CODE.RET_ERROR_INVALID_URL:            "The provided server url is invalid",
-        CODE.RET_ERROR_JIRA_LOGIN:             "Login to Jira server was not possible",
         CODE.RET_ERROR_BOARD_NOT_FOUND:        "The Jira board does not exist or " +
                                                "you have no access to it.",
         CODE.RET_ERROR_PROFILE_ALREADY_EXISTS: "The profile you want to add already exists.\n" +

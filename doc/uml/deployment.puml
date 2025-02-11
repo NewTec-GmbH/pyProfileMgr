@@ -1,36 +1,20 @@
 @startuml DeploymentDiagram
 
-node "Jira" <<virtual-machine>> as jira_vm {
-  node "Jira server" as jira_server {
-      database "Jira database" as jira_db
-  }
-
-  interface "Jira REST API" as jira_rest_api
-  jira_server -- jira_rest_api
-}
-
 node "Continuous integration server" <<virtual-machine>> {
   package "Scripts" {
     component "pyJiraCli" as jira_cli #White
     component "pyMetricCli" as metric_cli #White
     component "pyProfileMgr" as profile_mgr
+    ProfileMgr - [profile_mgr]
   }
 
   folder Filesystem {
     file "Profile data" as profile_data_files
   }
 
-  ProfileMgr - [profile_mgr]
-  jira_cli -> ProfileMgr
+  jira_cli --> ProfileMgr
   metric_cli --> ProfileMgr
   profile_mgr -- profile_data_files
 }
-
-jira_rest_api )-- profile_mgr
-
-' Notes
-note top of jira_server
-  Issue tracking system
-end note
 
 @enduml

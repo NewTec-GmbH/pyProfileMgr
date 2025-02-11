@@ -1,7 +1,7 @@
 """ Command for the profile function.
-    This module can add, remove or configure server profiles.
+    This module can add, remove, modify and list server profiles.
     The profiles contain server url, login data, the server certificate
-    and configuration data for a specific jira server instance.
+    and configuration data for a specific server instance.
 """
 # BSD 3-Clause License
 #
@@ -38,9 +38,7 @@
 import argparse
 
 from pyProfileMgr.profile_mgr import ProfileMgr
-from pyProfileMgr.profile_mgr import ProfileType
 
-from pyProfileMgr.jira_server import Server
 from pyProfileMgr.printer import Printer, PrintType
 from pyProfileMgr.ret import Ret
 
@@ -102,7 +100,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         metavar='<server URL>',
         required=True,
-        help="The Jira server URL to connect to."
+        help="The server URL to connect to."
     )
 
     sub_parser_add.add_argument(
@@ -111,7 +109,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         metavar='<token>',
         required=False,
-        help="The token to authenticate at the Jira server."
+        help="The token to authenticate at the server."
     )
 
     sub_parser_add.add_argument(
@@ -120,7 +118,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         metavar='<user>',
         required=False,
-        help="The user to authenticate at the Jira server."
+        help="The user to authenticate at the server."
     )
 
     sub_parser_add.add_argument(
@@ -129,7 +127,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         metavar='<password>',
         required=False,
-        help="The password to authenticate at the Jira server."
+        help="The password to authenticate at the server."
     )
 
     sub_parser_add.add_argument(
@@ -182,7 +180,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         required=False,
         metavar='<server URL>',
-        help="The Jira server URL to connect to."
+        help="The server URL to connect to."
     )
 
     sub_parser_update.add_argument(
@@ -191,7 +189,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         required=False,
         metavar='<token>',
-        help="The token to authenticate with the Jira server."
+        help="The token to authenticate with the server."
     )
 
     sub_parser_update.add_argument(
@@ -200,7 +198,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         required=False,
         metavar='<user>',
-        help="The user to authenticate at the Jira server."
+        help="The user to authenticate at the server."
     )
 
     sub_parser_update.add_argument(
@@ -209,7 +207,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         required=False,
         metavar='<password>',
-        help="The password to authenticate at the Jira server."
+        help="The password to authenticate at the server."
     )
 
     sub_parser_update.add_argument(
@@ -253,20 +251,12 @@ def _profile_add(args) -> Ret.CODE:
     ret_status = Ret.CODE.RET_OK
 
     # Do not overwrite existing profiles.
-    profile_handler = ProfileMgr()
-    profile_list = profile_handler.get_profiles()
+    profile_mgr = ProfileMgr()
+    profile_list = profile_mgr.get_profiles()
     if args.profile_name in profile_list:
-        ret_status = Ret.CODE.RET_ERROR_PROFILE_ALREADY_EXISTS
+        return Ret.CODE.RET_ERROR_PROFILE_ALREADY_EXISTS
 
-    # Buffer profile name so the check can be run without it.
-    if ret_status is Ret.CODE.RET_OK:
-        temp_profile_name = args.profile_name
-        args.profile_name = None
-        ret_status = _check_jira_profile(args)
-        args.profile_name = temp_profile_name
-
-    if ret_status is Ret.CODE.RET_OK:
-        ret_status = _add_profile(args)
+    ret_status = _add_profile(args)
 
     return ret_status
 
@@ -307,36 +297,7 @@ def _profile_update(args) -> Ret.CODE:
     Returns:
         Ret.CODE: The return status of the module.
     """
-    ret_status = _check_jira_profile(args)
-
-    if ret_status is Ret.CODE.RET_OK:
-        ret_status = _update_profile(args)
-
-    return ret_status
-
-
-def _check_jira_profile(args) -> Ret.CODE:
-    """ Checks whether the profile information is valid by login to Jira.
-
-    Returns:
-        Ret.CODE: If successful it will return Ret.CODE.RET_OK otherwise a error.
-    """
-
-    # Check if the profile type is 'jira' if given (note that not all
-    # commands require a profile type, so it is not mandatory).
-    if (args.profile_type is not None) and (args.profile_type != ProfileType.JIRA):
-        return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
-
-    server = Server()
-    # Login to the server (prefer token over user/password).
-    if args.token is not None:
-        ret_status = server.login(
-            args.profile_name, args.server, args.token, None, None)
-    else:
-        ret_status = server.login(
-            args.profile_name, args.server, None, args.user, args.password)
-
-    return ret_status
+    return _update_profile(args)
 
 
 def _add_profile(args) -> Ret.CODE:
@@ -349,7 +310,7 @@ def _add_profile(args) -> Ret.CODE:
         Ret.CODE: Status code indicating the success or failure of the profile addition.
     """
     ret_status = Ret.CODE.RET_OK
-    _profile = ProfileMgr()
+    profile_mgr = ProfileMgr()
 
     if args.server is None:
         ret_status = Ret.CODE.RET_ERROR_NO_SERVER_URL
@@ -367,7 +328,7 @@ def _add_profile(args) -> Ret.CODE:
         user = args.user
         password = args.password
         certificate = args.cert
-        ret_status = _profile.add(
+        ret_status = profile_mgr.add(
             profile_name, profile_type, server, token, user, password, certificate)
 
     return ret_status
@@ -380,11 +341,10 @@ def _list_profiles() -> Ret.CODE:
         Ret.CODE: Status code indicating the success or failure of the command.
     """
     ret_status = Ret.CODE.RET_OK
-    profile_handler = ProfileMgr()
-    profile_list = profile_handler.get_profiles()
+
+    profile_list = ProfileMgr().get_profiles()
 
     print("Profiles:")
-
     for profile_name in profile_list:
         print(f"\t{profile_name}")
 
@@ -418,11 +378,12 @@ def _update_profile(args) -> Ret.CODE:
     """
     # Update cert
     if args.cert is not None:
-        _profile = ProfileMgr()
-        ret_status = _profile.load(args.profile_name)
+        profile_mgr = ProfileMgr()
+        ret_status = profile_mgr.load(args.profile_name)
 
         if ret_status == Ret.CODE.RET_OK:
             # profile exists
-            ret_status = _profile.add_certificate(args.profile_name, args.cert)
+            ret_status = profile_mgr.add_certificate(
+                args.profile_name, args.cert)
 
     return ret_status

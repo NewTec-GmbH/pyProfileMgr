@@ -52,6 +52,7 @@ from pyProfileMgr.file_handler import FileHandler as File
 from pyProfileMgr.ret import Ret, Warnings
 from pyProfileMgr.printer import Printer, PrintType
 
+
 ################################################################################
 # Variables
 ################################################################################
@@ -84,7 +85,7 @@ FILE_ATTRIBUTE_HIDDEN = 0x02
 
 class ProfileMgr:
     """ The ProfileMgr class handles all  processes regarding server profiles.
-        This includes adding, deleting or configuring profile data. 
+        This includes adding, deleting or configuring profile data.
     """
 
     def __init__(self):
@@ -97,6 +98,7 @@ class ProfileMgr:
         self._profile_cert = None
 
     # pylint: disable=R0912, R0913, R0917
+
     def add(self,
             profile_name: str,
             profile_type: ProfileType,
@@ -127,7 +129,7 @@ class ProfileMgr:
             SERVER_URL_KEY: server_url,
         }
 
-        # Check if the token is provided and add it to the profile.
+        # If the token is provided, add it to the profile.
         if token is not None:
             write_dict[TOKEN_KEY] = token
         # Else require user/password for authentication.
@@ -313,19 +315,6 @@ class ProfileMgr:
 
         return ret_status
 
-    def get_config_data(self) -> dict:
-        """ This function will format and return all available config data so that it can
-            be used by the other modules.
-
-        Returns:
-            dict: A dictionary containing all formatted configuration data.
-        """
-        config_dict = {}
-
-        # code goes here
-
-        return config_dict
-
     def delete(self, profile_name: str) -> None:
         """_summary_
 
@@ -405,10 +394,10 @@ class ProfileMgr:
 
         return profile_names
 
+
 ################################################################################
 # Functions
 ################################################################################
-
 
 def _add_new_profile(write_dict: dict, profile_path: str, cert_path: str) -> Ret.CODE:
     """ Adds a new server profile to the configuration.

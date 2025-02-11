@@ -2,13 +2,8 @@
 
 package "pyProfileMgr" {
   component "Main entry point" as main
-  component "Jira server" as jira_server
   component "Profile command" <<command>> as cmd_profile
   component "Profile manager" as profile_mgr
-}
-
-package "Python Jira" {
-  component "jira.client.JIRA" as jira
 }
 
 package "Python" as python {
@@ -17,12 +12,7 @@ package "Python" as python {
 }
 
 main o--> cmd_profile
-cmd_profile o--> jira_server
 cmd_profile o--> profile_mgr
-jira_server o--> profile_mgr
 main *--> argparse
-
-jira_server *--> jira
-jira *--> requests
 
 @enduml

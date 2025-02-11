@@ -1,4 +1,4 @@
-@startuml pyJiraCli_components
+@startuml pyProfileMgr_components
 
 top to bottom direction
 skinparam Linetype ortho
@@ -14,10 +14,6 @@ package "pyProfileMgr" {
 
 profile_data .down...> cmd_profile : <<flow>>
 
-database "Jira server" as jira_server {
-  file "Jira issue" as jira_issue
-}
-
 folder Filesystem {
   file "Profile data" as profile_data_files
 }
@@ -26,7 +22,6 @@ main .down.> cmd_profile : <<flow>>
 
 cmd_profile ...down.> profile_mgr : <<flow>>\n<<store/delete/update/list>>
 profile_mgr ...down.> profile_data_files : <<flow>>\n<<store/delete/update/list>>
-profile_mgr .down...> jira_server : <<authenticate>>
 
 'Notes
 note top of profile_data
