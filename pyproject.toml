@@ -9,7 +9,7 @@ description = "Library containing the Profile Manager."
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
-    { name = "pyProfileMgr", email = "stefan.vogel@newtec.de" }
+    { name = "Stefan Vogel", email = "stefan.vogel@newtec.de" }
 ]
 license = {text = "BSD 3-Clause"}
 classifiers = [
