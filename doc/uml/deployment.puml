@@ -14,13 +14,13 @@ node "Continuous integration server" <<virtual-machine>> {
     component "pyJiraCli" as jira_cli #White
     component "pyMetricCli" as metric_cli #White
     component "pyProfileMgr" as profile_mgr
-    ProfileMgr - [profile_mgr]
   }
 
   folder Filesystem {
     file "Profile data" as profile_data_files
   }
 
+  ProfileMgr - [profile_mgr]
   jira_cli -> ProfileMgr
   metric_cli --> ProfileMgr
   profile_mgr -- profile_data_files

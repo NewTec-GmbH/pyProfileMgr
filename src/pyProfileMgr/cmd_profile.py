@@ -228,7 +228,7 @@ def execute(_) -> Ret.CODE:
     """ This function serves as entry point for the command 'profile'.
         It will be stored as callback for this modules subparser command.
 
-    Args: 
+    Args:
         args (obj): The command line arguments.
 
     Returns:
