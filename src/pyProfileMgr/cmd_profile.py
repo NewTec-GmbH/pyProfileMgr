@@ -313,10 +313,10 @@ def _add_profile(args) -> Ret.CODE:
     profile_mgr = ProfileMgr()
 
     if args.server is None:
-        ret_status = Ret.CODE.RET_ERROR_NO_SERVER_URL
+        ret_status = Ret.CODE.RET_ERROR_MISSING_SERVER_URL
         LOG.print_error(PrintType.ERROR, ret_status)
     elif args.token is None and (args.user is None or args.password is None):
-        ret_status = Ret.CODE.RET_ERROR_NO_USERINFORMATION
+        ret_status = Ret.CODE.RET_ERROR_MISSING_USER_INFORMATION
         LOG.print_error(PrintType.ERROR, ret_status)
         print("Profiles can only be created using login credentials." +
               "Please provide a token using the --token option or --user/--password.")
