@@ -1,9 +1,9 @@
 # pyProfileMgr <!-- omit in toc -->
 
-pyProfileMgr is a Python module containing the Profile Manager component and CLI to it.
+pyProfileMgr is a Python module containing the Profile Manager component.
 
-The module encapsulates reading, writing, listing and updating local profiles that store
-Jira, Polarion and/or Superset server and credentials information.
+It also provides CLI access for reading, writing, listing and updating profiles.
+A profile can store Jira, Polarion and Superset server, credentials and certificate data.
 
 [![License](https://img.shields.io/badge/license-bsd-3.svg)](https://choosealicense.com/licenses/bsd-3-clause/) [![Repo Status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip) [![CI](https://github.com/NewTec-GmbH/pyProfileMgr/actions/workflows/test.yml/badge.svg)](https://github.com/NewTec-GmbH/pyProfileMgr/actions/workflows/test.yml)
 
@@ -17,7 +17,9 @@ Jira, Polarion and/or Superset server and credentials information.
 
 ## Overview
 
->TODO
+![overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/NewTec-GmbH/pyProfileMgr/main/doc/uml/overview.puml)
+
+More information on the deployment and architecture can be found in the [doc](./doc/README.md) folder.
 
 ## Installation
 
@@ -40,6 +42,7 @@ Used 3rd party libraries which are not part of the standard Python package:
 
 | Library | Description | License |
 | ------- | ----------- | ------- |
+| [colorama](https://github.com/tartley/colorama) | ANSI color support | BSD-3 License |
 | [jira](https://pypi.org/project/jira/) | Python library for interacting with JIRA via REST APIs | BSD License (BSD-2-Clause) |
 | [toml](https://github.com/uiri/toml) | Parsing [TOML](https://en.wikipedia.org/wiki/TOML) | MIT |
 
