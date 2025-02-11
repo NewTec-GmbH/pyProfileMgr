@@ -339,13 +339,36 @@ class ProfileMgr:
             _printer.print_info("Profile folder does not exist: ", profile_name,
                                 "A profile with this name does not exist.")
 
-    def get_cert_path(self) -> str:
-        """ Retrieves the file path to the server certificate.
+    def get_profiles(self) -> [str]:
+        """ Get a list of all stored profiles.
 
         Returns:
-            str: The file path of the server certificate used by the profile.
+            [str]: List of all stored profiles.
         """
-        return self._profile_cert
+        profiles_path = _get_path_to_profiles_folder()
+        profile_names = []
+
+        for file_name in os.listdir(profiles_path):
+            if os.path.isfile(os.path.join(profiles_path, file_name)) is False:
+                profile_names.append(file_name)
+
+        return profile_names
+
+    def get_name(self) -> str:
+        """ Returns the name of the loaded profile.
+
+        Returns:
+            str: The name of the profile.
+        """
+        return self._profile_name
+
+    def get_type(self) -> ProfileType:
+        """ Returns the type of the loaded profile.
+
+        Returns:
+            str: The profile type.
+        """
+        return self._profile_type
 
     def get_server_url(self) -> str:
         """ Retrieves the server URL associated with the profile.
@@ -379,20 +402,13 @@ class ProfileMgr:
         """
         return self._profile_password
 
-    def get_profiles(self) -> [str]:
-        """ Get a list of all stored profiles.
+    def get_cert_path(self) -> str:
+        """ Retrieves the file path to the server certificate.
 
         Returns:
-            [str]: List of all stored profiles.
+            str: The file path of the server certificate used by the profile.
         """
-        profiles_path = _get_path_to_profiles_folder()
-        profile_names = []
-
-        for file_name in os.listdir(profiles_path):
-            if os.path.isfile(os.path.join(profiles_path, file_name)) is False:
-                profile_names.append(file_name)
-
-        return profile_names
+        return self._profile_cert
 
 
 ################################################################################
