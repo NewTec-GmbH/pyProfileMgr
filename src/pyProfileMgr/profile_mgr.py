@@ -57,7 +57,7 @@ from pyProfileMgr.printer import Printer, PrintType
 # Variables
 ################################################################################
 
-PATH_TO_PROFILES_FOLDER = "/.pyTools/.profiles/"
+PATH_TO_PROFILES_FOLDER = "/.pyProfileMgr/.profiles/"
 CERT_FILE = ".cert.crt"
 DATA_FILE = ".data.json"
 
@@ -440,7 +440,7 @@ def _add_new_profile(write_dict: dict, profile_path: str, cert_path: str) -> Ret
 
 
 def _get_path_to_profiles_folder() -> str:
-    """ Returns the path to the pyTools profiles.
+    """ Returns the path to the profiles.
 
         Profile data is stored under the users home directory.
 

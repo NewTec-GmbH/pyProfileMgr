@@ -1,4 +1,4 @@
-"""The Error codes of pyTools."""
+"""The Error codes of pyProfileMgr."""
 # BSD 3-Clause License
 #
 # Copyright (c) 2024 - 2025, NewTec GmbH
@@ -45,7 +45,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Ret():
-    """The Error codes of pyTools."""
+    """The Error codes of pyProfileMgr."""
 
     class CODE(IntEnum):
         """ The exit statuses of the modules."""
