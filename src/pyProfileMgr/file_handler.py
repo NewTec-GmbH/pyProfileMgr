@@ -111,7 +111,7 @@ class FileHandler:
         formatted_path = os.path.join(*path_comps)
 
         if os.name != 'nt':
-            formatted_path = '/' + formatted_path.replace("\\", '/')
+            formatted_path = formatted_path.replace("\\", '/')
         else:
             formatted_path = formatted_path.replace('/', "\\")
 
