@@ -70,7 +70,7 @@ class FileHelper:
     def set_filepath(self, path: str) -> Ret.CODE:
         """ Sets the path for the file contained in this Instance.
 
-        Normalized the given path and checks if it exists.
+        Normalizes the given path and checks if it exists.
 
         Args:
             path (str): Path to the file (can be relative or absolute).
