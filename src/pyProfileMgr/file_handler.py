@@ -37,7 +37,7 @@ import os
 import ctypes
 import logging
 
-from pyProfileMgr.ret import Ret, Warnings
+from pyProfileMgr.ret import Ret
 
 
 ################################################################################
@@ -55,62 +55,30 @@ FILE_ATTRIBUTE_HIDDEN = 0x02
 
 
 class FileHandler:
-    """ The file handler class provides file operations
-        like open, close , read and write.
+    """ The file handler class provides file operations like open, close , read and write.
+
+        See original source code at
+        https://github.com/NewTec-GmbH/pyJiraCli/blob/de4a81fd3dfcb277c96279e49b3aa6498f51cf50/src/pyJiraCli/file_handler.py
     """
 
     def __init__(self):
         self._file = None
         self._ext = None
         self._path = None
-        self._parent_path = None
         self._content = None
 
-    def process_file_argument(self, default_name: str, file_arg: str) -> Ret.CODE:
-        """ Get the filename. Handle possible extension errors
-            with the filename provided via the -file option.
-            If a path to a file was supplied, the path will be kept.
-            The returned filename will be without extension.
-
-        Args:
-            issue_key (str): The current issue key.
-            arg_file (str):  The -file option string provided via the console.
-
-        Returns:
-            File:   The filename according to the -file option.
-                    The extension will be added later.
-        """
-        ret_status = Ret.CODE.RET_OK
-
-        if file_arg is None:
-            ret_status = self.set_filepath(f".\\{default_name}.json")
-
-        else:
-            ret_status = self.set_filepath(file_arg)
-
-            if ret_status == Ret.CODE.RET_OK:
-                ext = self.get_file_extension()
-
-                if ext is None:
-                    ret_status = self.set_filepath(os.path.join(self.get_parent_path(),
-                                                                f'{default_name}.json'))
-
-                elif ext != '.json':
-                    LOG.warning(
-                        "%s", Warnings.MSG[Warnings.CODE.WARNING_UNKNOWN_FILE_EXTENSION])
-
-                    path, ext = os.path.splitext(self.get_path())
-
-                    ret_status = self.set_filepath(path + '.json')
-
-            else:
-                # file or the parent directory exist and the file has the proper file format
-                pass
-
-        return ret_status
-
     def set_filepath(self, path: str) -> Ret.CODE:
-        """ Set the path for the file contained in this Instance.
+        """ Sets the path for the file contained in this Instance.
+
+        Splits the provided path into components based on '/' or '\'.
+        If the path is relative, it combines it with the current working directory.
+        Removes any empty components from the path.
+        Checks if the first component is a drive name and adjusts it accordingly.
+        Joins the components back into a formatted path.
+        Adjusts the path format for non-Windows systems.
+        Checks if the formatted path exists.
+        If they exist, it sets the file extension, and path for the instance.
+        If the path does not exist, it returns error code RET_ERROR_FILEPATH_INVALID.
 
         Args:
             path (str): Path to the file.
@@ -141,23 +109,18 @@ class FileHandler:
             path_comps[0] += '/'
 
         formatted_path = os.path.join(*path_comps)
-        parent_path = os.path.join(*path_comps[:-1])
 
         if os.name != 'nt':
             formatted_path = '/' + formatted_path.replace("\\", '/')
-            parent_path = '/' + parent_path.replace("\\", '/')
+        else:
+            formatted_path = formatted_path.replace('/', "\\")
 
-        if os.path.exists(formatted_path) or \
-           os.path.exists(parent_path):
+        if os.path.exists(formatted_path):
             self._ext = os.path.splitext(formatted_path)[-1]
             self._path = formatted_path
-            self._parent_path = parent_path
 
             if os.path.isdir(formatted_path):
                 self._ext = None
-                self._path = formatted_path
-                self._parent_path = formatted_path
-
         else:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
@@ -208,14 +171,6 @@ class FileHandler:
             str: The existing filepath or parent folder path.
         """
         return self._path
-
-    def get_parent_path(self) -> str:
-        """ Return the parent path as a string.
-
-        Returns:
-            str: The existing parent folder path.
-        """
-        return self._parent_path
 
     def get_file_content(self) -> str:
         """ Return the file content

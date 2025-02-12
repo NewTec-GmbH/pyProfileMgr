@@ -100,6 +100,8 @@ class ProfileMgr:
         self._profile_password = None
         self._profile_cert = None
 
+        self._profiles_storage_path = self.prepare_profiles_folder()
+
     # pylint: disable=R0912, R0913, R0917
 
     def add(self,
@@ -145,7 +147,7 @@ class ProfileMgr:
             else:
                 return Ret.CODE.RET_ERROR_MISSING_CREDENTIALS
 
-        profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
@@ -187,7 +189,7 @@ class ProfileMgr:
         ret_status = Ret.CODE.RET_OK
 
         _file = File()
-        profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         if os.path.exists(cert_path):
             ret_status = _file.set_filepath(cert_path)
@@ -226,7 +228,7 @@ class ProfileMgr:
         ret_status = Ret.CODE.RET_OK
 
         _file = File()
-        profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         self.load(profile_name)
 
@@ -281,7 +283,7 @@ class ProfileMgr:
 
         _file = File()
 
-        profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         if os.path.exists(profile_path):
             ret_status = _file.set_filepath(profile_path + DATA_FILE)
@@ -321,7 +323,7 @@ class ProfileMgr:
         Args:
             profile_name (str): _description_
         """
-        profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         if os.path.exists(profile_path):
             if os.path.exists(profile_path + DATA_FILE):
@@ -337,17 +339,17 @@ class ProfileMgr:
         else:
             LOG.error("Folder for profile '%s' does not exist", profile_name)
 
-    def get_profiles(self) -> [str]:
+    def get_profiles(self) -> list[str]:
         """ Get a list of all stored profiles.
 
         Returns:
             [str]: List of all stored profiles.
         """
-        profiles_path = _get_path_to_profiles_folder()
+
         profile_names = []
 
-        for file_name in os.listdir(profiles_path):
-            if os.path.isfile(os.path.join(profiles_path, file_name)) is False:
+        for file_name in os.listdir(self._profiles_storage_path):
+            if os.path.isfile(os.path.join(self._profiles_storage_path, file_name)) is False:
                 profile_names.append(file_name)
 
         return profile_names
@@ -408,10 +410,33 @@ class ProfileMgr:
         """
         return self._profile_cert
 
+    def prepare_profiles_folder(self) -> str:
+        """ Prepares the profiles storage folder and returns the path to it.
+
+            Profile data is stored under the users home directory.
+
+        Returns:
+            str: The path to the profiles folder.
+        """
+
+        profiles_storage_path = os.path.expanduser(
+            "~") + PATH_TO_PROFILES_FOLDER
+
+        # Create the profiles storage folder if it does not exist.
+        if not os.path.exists(profiles_storage_path):
+            os.makedirs(profiles_storage_path)
+
+            # Hide the folder on Windows systems.
+            if os.name == 'nt':
+                ctypes.windll.kernel32.SetFileAttributesW(profiles_storage_path,
+                                                          FILE_ATTRIBUTE_HIDDEN)
+
+        return profiles_storage_path
 
 ################################################################################
 # Functions
 ################################################################################
+
 
 def _add_new_profile(write_dict: dict, profile_path: str, cert_path: str) -> Ret.CODE:
     """ Adds a new server profile to the configuration.
@@ -451,25 +476,3 @@ def _add_new_profile(write_dict: dict, profile_path: str, cert_path: str) -> Ret
             _file.hide_file()
 
     return ret_status
-
-
-def _get_path_to_profiles_folder() -> str:
-    """ Returns the path to the profiles.
-
-        Profile data is stored under the users home directory.
-
-    Returns:
-        str: The path to the profiles folder.
-    """
-
-    user_info_path = os.path.expanduser("~") + PATH_TO_PROFILES_FOLDER
-
-    if not os.path.exists(user_info_path):
-
-        os.makedirs(user_info_path)
-
-        if os.name == 'nt':
-            ctypes.windll.kernel32.SetFileAttributesW(user_info_path,
-                                                      FILE_ATTRIBUTE_HIDDEN)
-
-    return user_info_path
