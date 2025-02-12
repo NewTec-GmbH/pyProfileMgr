@@ -32,17 +32,23 @@
 ################################################################################
 # Imports
 ################################################################################
+
 import os
 import ctypes
+import logging
 
 from pyProfileMgr.ret import Ret, Warnings
-from pyProfileMgr.printer import Printer, PrintType
+
 
 ################################################################################
 # Variables
 ################################################################################
+
+LOG: logging.Logger = logging.getLogger(__name__)
+
 FILE_ATTRIBUTE_HIDDEN = 0x02
-printer = Printer()
+
+
 ################################################################################
 # Classes
 ################################################################################
@@ -61,13 +67,13 @@ class FileHandler:
         self._content = None
 
     def process_file_argument(self, default_name: str, file_arg: str) -> Ret.CODE:
-        """ Get the filename. Handle possible extension errors 
+        """ Get the filename. Handle possible extension errors
             with the filename provided via the -file option.
             If a path to a file was supplied, the path will be kept.
             The returned filename will be without extension.
 
         Args:
-            issue_key (str): The current issue key. 
+            issue_key (str): The current issue key.
             arg_file (str):  The -file option string provided via the console.
 
         Returns:
@@ -90,8 +96,8 @@ class FileHandler:
                                                                 f'{default_name}.json'))
 
                 elif ext != '.json':
-                    printer.print_error(PrintType.WARNING,
-                                        Warnings.CODE.WARNING_UNKNOWN_FILE_EXTENSION)
+                    LOG.warning(
+                        "%s", Warnings.MSG[Warnings.CODE.WARNING_UNKNOWN_FILE_EXTENSION])
 
                     path, ext = os.path.splitext(self.get_path())
 
@@ -178,7 +184,7 @@ class FileHandler:
         return ret_status
 
     def get_file(self) -> object:
-        """ Return the file object in 
+        """ Return the file object in
             this instance.
 
         Returns:
@@ -187,7 +193,7 @@ class FileHandler:
         return self._file
 
     def get_file_extension(self) -> str:
-        """ Return the file extension 
+        """ Return the file extension
             of the file as a string.
 
         Returns:
@@ -249,7 +255,7 @@ class FileHandler:
             and save the file obj.
 
         Args:
-            file_mode (str): For reading files 'r' or for writing files 'w'.    
+            file_mode (str): For reading files 'r' or for writing files 'w'.
 
         Returns:
             Ret.CODE:   Returns Ret.CODE.RET_OK if successful or else the corresponding error code.
@@ -276,7 +282,7 @@ class FileHandler:
                                                               FILE_ATTRIBUTE_HIDDEN)
 
     def close_file(self) -> None:
-        """ Close the file in the class instance.        
+        """ Close the file in the class instance.
         """
         if self._file is not None:
             if not self._file.closed:

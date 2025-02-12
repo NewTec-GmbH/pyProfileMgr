@@ -35,18 +35,21 @@
 ################################################################################
 # Imports
 ################################################################################
+
 import argparse
+import logging
 
 from pyProfileMgr.profile_mgr import ProfileMgr
 
-from pyProfileMgr.printer import Printer, PrintType
 from pyProfileMgr.ret import Ret
+
 
 ################################################################################
 # Variables
 ################################################################################
 
-LOG = Printer()
+LOG: logging.Logger = logging.getLogger(__name__)
+
 
 ################################################################################
 # Classes
@@ -314,10 +317,10 @@ def _add_profile(args) -> Ret.CODE:
 
     if args.server is None:
         ret_status = Ret.CODE.RET_ERROR_MISSING_SERVER_URL
-        LOG.print_error(PrintType.ERROR, ret_status)
+        LOG.error("%s", Ret.MSG[ret_status])
     elif args.token is None and (args.user is None or args.password is None):
         ret_status = Ret.CODE.RET_ERROR_MISSING_USER_INFORMATION
-        LOG.print_error(PrintType.ERROR, ret_status)
+        LOG.error("%s", Ret.MSG[ret_status])
         print("Profiles can only be created using login credentials." +
               "Please provide a token using the --token option or --user/--password.")
     else:

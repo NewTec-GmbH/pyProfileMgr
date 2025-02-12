@@ -35,12 +35,12 @@
 
 import sys
 import argparse
+import logging
 from colorama import just_fix_windows_console
 
 # Import command modules
 from pyProfileMgr import cmd_profile
 
-from pyProfileMgr.printer import Printer
 from pyProfileMgr.ret import Ret
 from pyProfileMgr.version import __version__, __author__, __email__, __repository__, __license__
 
@@ -48,6 +48,8 @@ from pyProfileMgr.version import __version__, __author__, __email__, __repositor
 ################################################################################
 # Variables
 ################################################################################
+
+LOG: logging.Logger = logging.getLogger(__name__)
 
 # Add command modules here
 _CMD_MODULES = [
@@ -72,7 +74,7 @@ PROG_EPILOG = PROG_COPYRIGHT + " - " + PROG_GITHUB
 
 def add_parser() -> argparse.ArgumentParser:
     """ Adds the parser for command line arguments and
-        sets the execute function of each 
+        sets the execute function of each
         cmd module as callback for the subparser command.
         Returns the parser after all the modules have been registered
         and added their subparsers.
@@ -111,31 +113,28 @@ def main() -> Ret.CODE:
         int: System exit status.
     """
     ret_status = Ret.CODE.RET_OK
-    printer = Printer()
     args = None
 
     # Older windows consoles doesn't support ANSI color codes by default.
     # Enable the Windows built-in ANSI support.
     just_fix_windows_console()
 
-    # Get parser
+    # Create the main parser and add the subparsers.
     parser = add_parser()
 
-    # Parse command line arguments.
-    # If error occurs, exits the program from this point with code 2.
+    # Parse the command line arguments.
     args = parser.parse_args()
 
     if args is None:
         ret_status = Ret.CODE.RET_ERROR_ARGPARSE
+        parser.print_help()
     else:
-        # In verbose mode print all program arguments
+        # If the verbose flag is set, change the default logging level.
         if args.verbose:
-            printer.set_verbose()
-            print("Program arguments: ")
-
+            logging.basicConfig(level=logging.INFO)
+            LOG.info("Program arguments: ")
             for arg in vars(args):
-                print(f"* {arg} = {vars(args)[arg]}")
-            print("\n")
+                LOG.info("* %s = %s", arg, vars(args)[arg])
 
         # Call command function and return exit status
         ret_status = args.func(args)
@@ -145,10 +144,10 @@ def main() -> Ret.CODE:
 
     return ret_status
 
+
 ################################################################################
 # Main
 ################################################################################
-
 
 if __name__ == "__main__":
     sys.exit(main())

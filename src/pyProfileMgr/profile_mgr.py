@@ -34,9 +34,11 @@
 ################################################################################
 # Imports
 ################################################################################
+
 import os
 import ctypes
 import json
+import logging
 
 try:
     from enum import StrEnum  # Available in Python 3.11+
@@ -50,12 +52,13 @@ from dataclasses import dataclass
 
 from pyProfileMgr.file_handler import FileHandler as File
 from pyProfileMgr.ret import Ret, Warnings
-from pyProfileMgr.printer import Printer, PrintType
 
 
 ################################################################################
 # Variables
 ################################################################################
+
+LOG: logging.Logger = logging.getLogger(__name__)
 
 PATH_TO_PROFILES_FOLDER = "/.pyProfileMgr/.profiles/"
 CERT_FILE = ".cert.crt"
@@ -121,7 +124,6 @@ class ProfileMgr:
         """
 
         ret_status = Ret.CODE.RET_OK
-        _printer = Printer()
         add_profile = True
 
         write_dict = {
@@ -134,8 +136,8 @@ class ProfileMgr:
             write_dict[TOKEN_KEY] = token
         # Else require user/password for authentication.
         else:
-            _printer.print_error(
-                PrintType.WARNING, Warnings.CODE.WARNING_TOKEN_RECOMMENDED)
+            LOG.warning(
+                "%s", Warnings.MSG[Warnings.CODE.WARNING_TOKEN_RECOMMENDED])
 
             if user is not None and password is not None:
                 write_dict[USER_KEY] = user
@@ -165,11 +167,10 @@ class ProfileMgr:
             ret_status = _add_new_profile(write_dict, profile_path, cert_path)
 
             if ret_status == Ret.CODE.RET_OK:
-                _printer.print_info("A new profile was successfully created. Profile name:",
-                                    profile_name)
-
+                LOG.info("Profile '%s' has successfully been created.",
+                         profile_name)
         else:
-            _printer.print_info("Adding profile canceled.")
+            LOG.info("Adding profile '%s' has bene canceled.", profile_name)
 
         return ret_status
 
@@ -186,7 +187,6 @@ class ProfileMgr:
         ret_status = Ret.CODE.RET_OK
 
         _file = File()
-        _printer = Printer()
         profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
 
         if os.path.exists(cert_path):
@@ -208,8 +208,8 @@ class ProfileMgr:
             _file.write_file(cert_data)
             _file.hide_file()
 
-            _printer.print_info("Successfully added a certificate to profile:",
-                                profile_name)
+            LOG.info("Successfully added a certificate to profile '%s'.",
+                     profile_name)
 
         return ret_status
 
@@ -226,7 +226,6 @@ class ProfileMgr:
         ret_status = Ret.CODE.RET_OK
 
         _file = File()
-        _printer = Printer()
         profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
 
         self.load(profile_name)
@@ -246,7 +245,8 @@ class ProfileMgr:
             _file.write_file(profile_data)
             _file.hide_file()
 
-            _printer.print_info("Added an API token to profile:", profile_name)
+            LOG.info("Successfully added an API token to profile '%s'.",
+                     profile_name)
 
         return ret_status
 
@@ -321,7 +321,6 @@ class ProfileMgr:
         Args:
             profile_name (str): _description_
         """
-        _printer = Printer()
         profile_path = _get_path_to_profiles_folder() + f"{profile_name}/"
 
         if os.path.exists(profile_path):
@@ -333,11 +332,10 @@ class ProfileMgr:
 
             os.rmdir(profile_path)
 
-            _printer.print_info("Successfully removed profile: ", profile_name)
+            LOG.info("Successfully removed profile '%s'.", profile_name)
 
         else:
-            _printer.print_info("Profile folder does not exist: ", profile_name,
-                                "A profile with this name does not exist.")
+            LOG.error("Folder for profile '%s' does not exist", profile_name)
 
     def get_profiles(self) -> [str]:
         """ Get a list of all stored profiles.
