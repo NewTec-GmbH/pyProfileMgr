@@ -9,7 +9,10 @@ A profile contains server URL, type, credentials (token or username/password) an
 
 - [Overview](#overview)
 - [Installation](#installation)
-- [SW Documentation](#sw-documentation)
+- [Usage](#usage)
+  - [Flags](#flags)
+- [Commands](#commands)
+- [Examples](#examples)- [SW Documentation](#sw-documentation)
 - [Used Libraries](#used-libraries)
 - [Issues, Ideas And Bugs](#issues-ideas-and-bugs)
 - [License](#license)
@@ -28,6 +31,26 @@ git clone https://github.com/NewTec-GmbH/pyProfileMgr.git
 cd pyProfileMgr
 pip install .
 ```
+
+## Usage
+
+```cmd
+pyProfileMgr [-h] [--version] [-v] {command} ...
+```
+
+### Flags
+
+| Flag           | Description                                                                                     |
+| :-----------:  | ----------------------------------------------------------------------------------------------- |
+| --help , -h    | Show the help message and exit.                                                                 |
+| --version      | Show version information and exit.                                                              |
+| --verbose , -v | Print full command details before executing the command. Enables logs of type INFO and WARNING. |
+
+## Commands
+
+| Command                                     | Description                                         |
+| :-----------------------------------------: | --------------------------------------------------- |
+|[profile](./doc/commands/profile.md)         | Add, list, delete or update server profiles.        |
 
 ## SW Documentation
 
