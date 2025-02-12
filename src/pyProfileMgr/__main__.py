@@ -36,7 +36,6 @@
 import sys
 import argparse
 import logging
-from colorama import just_fix_windows_console
 
 # Import command modules
 from pyProfileMgr import cmd_profile
@@ -114,10 +113,6 @@ def main() -> Ret.CODE:
     """
     ret_status = Ret.CODE.RET_OK
     args = None
-
-    # Older windows consoles doesn't support ANSI color codes by default.
-    # Enable the Windows built-in ANSI support.
-    just_fix_windows_console()
 
     # Create the main parser and add the subparsers.
     parser = add_parser()

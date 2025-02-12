@@ -12,7 +12,6 @@ A profile contains server URL, type, credentials (token or username/password) an
 - [Usage](#usage)
   - [Flags](#flags)
 - [Commands](#commands)
-- [Examples](#examples)- [SW Documentation](#sw-documentation)
 - [Used Libraries](#used-libraries)
 - [Issues, Ideas And Bugs](#issues-ideas-and-bugs)
 - [License](#license)
@@ -65,7 +64,6 @@ Used 3rd party libraries which are not part of the standard Python package:
 
 | Library | Description | License |
 | ------- | ----------- | ------- |
-| [colorama](https://github.com/tartley/colorama) | ANSI color support | BSD-3 License |
 | [toml](https://github.com/uiri/toml) | Parsing [TOML](https://en.wikipedia.org/wiki/TOML) | MIT |
 
 Sections below, for Github only
