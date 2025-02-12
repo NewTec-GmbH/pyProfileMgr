@@ -50,7 +50,7 @@ except ImportError:
 
 from dataclasses import dataclass
 
-from pyProfileMgr.file_handler import FileHandler as File
+from pyProfileMgr.file_helper import FileHelper as File
 from pyProfileMgr.ret import Ret, Warnings
 
 

@@ -1,4 +1,4 @@
-""" The file handler manages all file operations."""
+""" The file helper class provides file operations like open, close, read and write. """
 
 # BSD 3-Clause License
 #
@@ -54,8 +54,8 @@ FILE_ATTRIBUTE_HIDDEN = 0x02
 ################################################################################
 
 
-class FileHandler:
-    """ The file handler class provides file operations like open, close , read and write.
+class FileHelper:
+    """ The file helper class provides file operations like open, close, read and write.
 
         See original source code at
         https://github.com/NewTec-GmbH/pyJiraCli/blob/de4a81fd3dfcb277c96279e49b3aa6498f51cf50/src/pyJiraCli/file_handler.py
@@ -70,61 +70,26 @@ class FileHandler:
     def set_filepath(self, path: str) -> Ret.CODE:
         """ Sets the path for the file contained in this Instance.
 
-        Splits the provided path into components based on '/' or '\'.
-        If the path is relative, it combines it with the current working directory.
-        Removes any empty components from the path.
-        Checks if the first component is a drive name and adjusts it accordingly.
-        Joins the components back into a formatted path.
-        Adjusts the path format for non-Windows systems.
-        Checks if the formatted path exists.
-        If they exist, it sets the file extension, and path for the instance.
-        If the path does not exist, it returns error code RET_ERROR_FILEPATH_INVALID.
+        Normalized the given path and checks if it exists.
 
         Args:
-            path (str): Path to the file.
+            path (str): Path to the file (can be relative or absolute).
 
         Returns:
-        Ret:   Returns Ret.CODE.RET_OK if successful or else the corresponding error code.
+        Ret:   Returns Ret.CODE.RET_OK if successful; RET_ERROR_FILEPATH_INVALID otherwise.
         """
-        ret_status = Ret.CODE.RET_OK
 
-        path_comps = path.split('/')
+        abspath = os.path.abspath(path)
+        if os.path.exists(abspath):
+            self._ext = os.path.splitext(abspath)[-1]
+            self._path = abspath
 
-        if len(path_comps) == 1:
-            path_comps = path.split('\\')
-
-        if len(path_comps) == 1:
-            path_comps = [*os.path.split(os.getcwd()), path_comps[0]]
-
-        if path_comps[0] == '.':
-            root_path_comps = os.path.split(os.getcwd())
-            path_comps = [*root_path_comps, *path_comps[1:]]
-
-        # remove eventual empty path components
-        if '' in path_comps:
-            path_comps.remove('')
-
-        if path_comps[0][-1] == ':':
-            # check if the first component is a drive name
-            path_comps[0] += '/'
-
-        formatted_path = os.path.join(*path_comps)
-
-        if os.name != 'nt':
-            formatted_path = formatted_path.replace("\\", '/')
-        else:
-            formatted_path = formatted_path.replace('/', "\\")
-
-        if os.path.exists(formatted_path):
-            self._ext = os.path.splitext(formatted_path)[-1]
-            self._path = formatted_path
-
-            if os.path.isdir(formatted_path):
+            if os.path.isdir(abspath):
                 self._ext = None
         else:
-            ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
+            return Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
-        return ret_status
+        return Ret.CODE.RET_OK
 
     def read_file(self) -> Ret.CODE:
         """ Open the file in read mode and read its content
