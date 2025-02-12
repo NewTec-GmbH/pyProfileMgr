@@ -102,7 +102,7 @@ class ProfileMgr:
 
         self._profiles_storage_path = self.prepare_profiles_folder()
 
-    # pylint: disable=R0912, R0913, R0917
+    # pylint: disable=R0902, R0912, R0913, R0917
 
     def add(self,
             profile_name: str,
