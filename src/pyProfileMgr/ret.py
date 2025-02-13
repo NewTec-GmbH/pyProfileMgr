@@ -47,10 +47,10 @@ from dataclasses import dataclass
 
 @dataclass
 class Ret():
-    """ The Error codes of pyProfileMgr. """
+    """ The return values of pyProfileMgr. """
 
     class CODE(IntEnum):
-        """ The exit statuses of pyProfileMgr. """
+        """ The the return values and messages of pyProfileMgr. """
         RET_OK = 0
         RET_ERROR = 1
         RET_ERROR_ARGPARSE = 2  # Must be 2 to match the argparse error code.
@@ -83,15 +83,15 @@ class Ret():
 
 @dataclass
 class Warnings():
-    """ The messages corresponding to the return values and warnings. """
+    """ The warnings of pyProfileMgr. """
 
     class CODE(IntEnum):
-        """ The Warnings of pyProfileMgr. """
+        """ The error codes and messages of pyProfileMgr. """
         WARNING_TOKEN_RECOMMENDED = 0
 
     MSG = {
-        CODE.WARNING_TOKEN_RECOMMENDED:      "No api token was found in this server profile. " +
-                                             "Its recommended to add a token to your server " +
+        CODE.WARNING_TOKEN_RECOMMENDED:      "No api token was found in this server profile.\n" +
+                                             "It is recommended to add a token to your server " +
                                              "profile.",
     }
 

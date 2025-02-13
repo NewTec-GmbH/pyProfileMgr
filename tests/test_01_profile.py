@@ -52,7 +52,7 @@ from pyProfileMgr.ret import Ret
 ################################################################################
 
 def test_add_profile():
-    """Test the creation of a new profile."""
+    """Tests the creation of a new profile."""
 
     sut = ProfileMgr()
 
@@ -70,7 +70,7 @@ def test_add_profile():
 
 
 def test_add_certificate():
-    """Test the extension of an existing profile with a certificate."""
+    """Tests the extension of an existing profile with a certificate."""
 
     sut = ProfileMgr()
 
@@ -90,7 +90,7 @@ def test_add_certificate():
 
 
 def test_add_token():
-    """Test the extension of an existing profile with a token."""
+    """Tests the extension of an existing profile with a token."""
 
     sut = ProfileMgr()
 
@@ -109,7 +109,7 @@ def test_add_token():
 
 
 def test_delete_profile():
-    """Test the deletion of a new profile."""
+    """Tests the deletion of a new profile."""
 
     sut = ProfileMgr()
 
@@ -119,7 +119,7 @@ def test_delete_profile():
 
 
 def test_getters():
-    """Test the getters of the profile manager."""
+    """Tests the getters of the profile manager."""
 
     sut = ProfileMgr()
 
@@ -149,10 +149,10 @@ def test_getters():
     # get_api_token
     assert sut.get_api_token() == "testToken"
 
-    # get_user
+    # get_user (expected to be None since the profile contains a token).
     assert sut.get_user() is None
 
-    # get_password
+    # get_password (expected to be None since the profile contains a token).
     assert sut.get_password() is None
 
     # get_cert_path

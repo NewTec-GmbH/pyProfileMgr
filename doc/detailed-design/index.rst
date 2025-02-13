@@ -72,7 +72,7 @@ Software Detailed Design
    :template: custom-module-template.rst
    :recursive:
 
-   test_empty
+   test_01_profile
 
 .. </User editable section unittest> 
 
