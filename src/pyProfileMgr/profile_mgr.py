@@ -101,7 +101,7 @@ class ProfileMgr:
         self._profile_password = None
         self._profile_cert = None
 
-        self._profiles_storage_path = self.prepare_profiles_folder()
+        self._profiles_storage_path = self._prepare_profiles_folder()
 
     # pylint: disable=R0912, R0913, R0917
 
@@ -219,6 +219,10 @@ class ProfileMgr:
     def add_token(self, profile_name: str, api_token: str) -> Ret.CODE:
         """ Adds an API token to the specified profile.
 
+        NOTE: This function requires that the given profile ('profile_name') has been loaded before.
+
+        NOTE: This function is only used for profiles that require an API token for authentication.
+
         Args:
             profile_name (str): The name of the profile.
             api_token (str): The API token for accessing the profile.
@@ -234,6 +238,7 @@ class ProfileMgr:
         self.load(profile_name)
 
         write_dict = {
+            TYPE_KEY: self._profile_type,
             SERVER_URL_KEY: self._profile_server_url,
             TOKEN_KEY: api_token
         }
@@ -248,26 +253,10 @@ class ProfileMgr:
             _file.write_file(profile_data)
             _file.hide_file()
 
+            self._profile_token = api_token
+
             LOG.info("Successfully added an API token to profile '%s'.",
                      profile_name)
-
-        return ret_status
-
-    def add_config(self, issue_config_file: str, project_config_file: str) -> Ret.CODE:
-        """ Adds configuration settings from specified files to the profile.
-
-        Args:
-            issue_config_file (str): Path to the file containing issue configuration settings.
-            project_config_file (str): Path to the file containing project configuration settings.
-
-        Returns:
-            Ret.CODE: Status code indicating success or failure of the configuration addition.
-        """
-        ret_status = Ret.CODE.RET_OK
-
-        # pseudo code to remove unused-argument error
-        # until the function is implemented properly
-        print(f"{issue_config_file}, {project_config_file}")
 
         return ret_status
 
@@ -293,6 +282,7 @@ class ProfileMgr:
                 _file.open_file('r')
                 profile_dict = json.load(_file.get_file())
 
+                self._profile_name = profile_name
                 self._profile_type = profile_dict[TYPE_KEY]
 
                 try:
@@ -411,7 +401,7 @@ class ProfileMgr:
         """
         return self._profile_cert
 
-    def prepare_profiles_folder(self) -> str:
+    def _prepare_profiles_folder(self) -> str:
         """ Prepares the profiles storage folder and returns the path to it.
 
             Profile data is stored under the users home directory.

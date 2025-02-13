@@ -80,7 +80,7 @@ class FileHelper:
         """
 
         abspath = os.path.abspath(path)
-        if os.path.exists(abspath):
+        if os.path.exists(abspath) or os.path.exists(os.path.dirname(abspath)):
             self._ext = os.path.splitext(abspath)[-1]
             self._path = abspath
 
