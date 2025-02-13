@@ -50,7 +50,7 @@ class Ret():
     """ The Error codes of pyProfileMgr. """
 
     class CODE(IntEnum):
-        """ The exit statuses of the pyProfileMgr. """
+        """ The exit statuses of pyProfileMgr. """
         RET_OK = 0
         RET_ERROR = 1
         RET_ERROR_ARGPARSE = 2  # Must be 2 to match the argparse error code.
@@ -86,18 +86,10 @@ class Warnings():
     """ The messages corresponding to the return values and warnings. """
 
     class CODE(IntEnum):
-        """ The Warnings of the modules. """
-        WARNING_UNSAVE_CONNECTION = 0
-        WARNING_UNKNOWN_FILE_EXTENSION = 1
-        WARNING_TOKEN_RECOMMENDED = 2
+        """ The Warnings of pyProfileMgr. """
+        WARNING_TOKEN_RECOMMENDED = 0
 
     MSG = {
-        CODE.WARNING_UNSAVE_CONNECTION:      "No certificate for server authentication found." +
-                                             " It's strongly advised, to add a certificate for " +
-                                             "your server profile.",
-        CODE.WARNING_UNKNOWN_FILE_EXTENSION: "The provided file has an unknown file format. " +
-                                             "A new file with the same name and " +
-                                             "JSON file will be created.",
         CODE.WARNING_TOKEN_RECOMMENDED:      "No api token was found in this server profile. " +
                                              "Its recommended to add a token to your server " +
                                              "profile.",

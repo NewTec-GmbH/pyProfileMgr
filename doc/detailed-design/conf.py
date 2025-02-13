@@ -32,8 +32,8 @@ update_doc.update_pylint()
 
 project = 'pyProfileMgr'
 copyright = '%Y, NewTec GmbH'
-author = '???Author???'
-release = 'V0.???'
+author = 'Stefan Vogel'
+release = 'v1.0.0'
 version = release
 
 # -- General configuration ---------------------------------------------------
