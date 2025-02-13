@@ -92,7 +92,7 @@ class FileHelper:
         return Ret.CODE.RET_OK
 
     def read_file(self) -> Ret.CODE:
-        """ Open the file in read mode and read its content
+        """ Opens the file in read mode and read its content
             to the file instance.
 
         Returns:
@@ -112,7 +112,7 @@ class FileHelper:
         return ret_status
 
     def get_file(self) -> object:
-        """ Return the file object in
+        """ Returns the file object in
             this instance.
 
         Returns:
@@ -121,7 +121,7 @@ class FileHelper:
         return self._file
 
     def get_file_extension(self) -> str:
-        """ Return the file extension
+        """ Returns the file extension
             of the file as a string.
 
         Returns:
@@ -130,7 +130,7 @@ class FileHelper:
         return self._ext
 
     def get_path(self) -> str:
-        """ Return the path as a string.
+        """ Returns the path as a string.
 
         Returns:
             str: The existing filepath or parent folder path.
@@ -138,7 +138,7 @@ class FileHelper:
         return self._path
 
     def get_file_content(self) -> str:
-        """ Return the file content
+        """ Returns the file content
             of the file as string.
 
         Returns:
@@ -147,8 +147,8 @@ class FileHelper:
         return self._content
 
     def write_file(self, file_input: str) -> Ret.CODE:
-        """ Open the file in write mode
-            and write the function argument
+        """ Opens the file in write mode
+            and writes the function argument
             to the file.
 
         Args:
@@ -171,8 +171,8 @@ class FileHelper:
         return ret_status
 
     def open_file(self, file_mode: str) -> Ret.CODE:
-        """ Open the filepath in this instance
-            and save the file obj.
+        """ Opens the filepath in this instance
+            and saves the file obj.
 
         Args:
             file_mode (str): For reading files 'r' or for writing files 'w'.
@@ -193,8 +193,7 @@ class FileHelper:
         return ret_status
 
     def hide_file(self) -> None:
-        """ Set the file attribute "file hidden".
-        """
+        """ Sets the file attribute "file hidden". """
         if self._path is not None:
             if os.name == 'nt':
                 if os.path.exists(self._path):
@@ -202,8 +201,7 @@ class FileHelper:
                                                               FILE_ATTRIBUTE_HIDDEN)
 
     def close_file(self) -> None:
-        """ Close the file in the class instance.
-        """
+        """ Closes the file in the class instance. """
         if self._file is not None:
             if not self._file.closed:
                 self._file.close()
@@ -211,9 +209,7 @@ class FileHelper:
             self._file = None
 
     def delete_file(self) -> None:
-        """ Delete the file stored in the
-            class instance.
-        """
+        """ Deletes the file stored in the class instance. """
         if self._file is not None:
             if not self._file.closed:
                 self._file.close()

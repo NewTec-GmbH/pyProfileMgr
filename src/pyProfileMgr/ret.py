@@ -1,4 +1,4 @@
-"""The Error codes of pyProfileMgr."""
+""" The error codes an warnings of pyProfileMgr. """
 # BSD 3-Clause License
 #
 # Copyright (c) 2024 - 2025, NewTec GmbH
@@ -31,12 +31,14 @@
 ################################################################################
 # Imports
 ################################################################################
+
 from enum import IntEnum
 from dataclasses import dataclass
 
 ################################################################################
 # Variables
 ################################################################################
+
 
 ################################################################################
 # Classes
@@ -45,10 +47,10 @@ from dataclasses import dataclass
 
 @dataclass
 class Ret():
-    """The Error codes of pyProfileMgr."""
+    """ The Error codes of pyProfileMgr. """
 
     class CODE(IntEnum):
-        """ The exit statuses of the modules."""
+        """ The exit statuses of the pyProfileMgr. """
         RET_OK = 0
         RET_ERROR = 1
         RET_ERROR_ARGPARSE = 2  # Must be 2 to match the argparse error code.
@@ -81,10 +83,10 @@ class Ret():
 
 @dataclass
 class Warnings():
-    """ The messages corresponding to the return values and warnings."""
+    """ The messages corresponding to the return values and warnings. """
 
     class CODE(IntEnum):
-        """ Th Warnings of the modules."""
+        """ The Warnings of the modules. """
         WARNING_UNSAVE_CONNECTION = 0
         WARNING_UNKNOWN_FILE_EXTENSION = 1
         WARNING_TOKEN_RECOMMENDED = 2
@@ -100,6 +102,7 @@ class Warnings():
                                              "Its recommended to add a token to your server " +
                                              "profile.",
     }
+
 
 ################################################################################
 # Functions

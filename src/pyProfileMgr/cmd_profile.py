@@ -1,4 +1,5 @@
-""" Command for the profile function.
+""" The command for the profile function.
+
     This module can add, remove, modify and list server profiles.
     The profiles contain server url, login data, the server certificate
     and configuration data for a specific server instance.

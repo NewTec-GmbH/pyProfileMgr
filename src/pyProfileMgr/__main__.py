@@ -1,4 +1,4 @@
-"""The main module with the program entry point."""
+""" The main module with the program entry point. """
 
 # BSD 3-Clause License
 #

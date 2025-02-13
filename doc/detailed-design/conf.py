@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath('../../tests'))
 # Update Overview from ./README
 update_doc.update_overview()
 
-# Copy SW Architcture to location for import in Detailed Design
+# Copy SW Architecture to location for import in Detailed Design
 update_doc.update_architecture()
 
 # Find Python source files and add them to according autosummary section
