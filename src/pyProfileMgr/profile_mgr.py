@@ -36,7 +36,6 @@
 ################################################################################
 
 import os
-import ctypes
 import json
 import logging
 from dataclasses import dataclass
