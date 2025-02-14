@@ -1,8 +1,8 @@
 """This module provides version and author information."""
 
-#*******************************************************************************
-# Copyright (c) NewTec GmbH 2024   -   www.newtec.de
-#*******************************************************************************
+# *******************************************************************************
+# Copyright (c) NewTec GmbH 2025   -   www.newtec.de
+# *******************************************************************************
 
 # Imports **********************************************************************
 import importlib.metadata as meta
@@ -44,7 +44,7 @@ def init_from_metadata():
         list: Tool related information
     """
 
-    my_metadata = meta.metadata('template_python')
+    my_metadata = meta.metadata('pyProfileMgr')
 
     return \
         my_metadata['Version'], \

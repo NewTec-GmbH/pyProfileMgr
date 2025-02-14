@@ -1,0 +1,18 @@
+@startuml ArchitectureDiagram
+
+package "pyProfileMgr" {
+  component "Main entry point" as main
+  component "Profile command" <<command>> as cmd_profile
+  component "Profile manager" as profile_mgr
+}
+
+package "Python" as python {
+  component "Argparse" as argparse
+  component "Requests" as requests
+}
+
+main o--> cmd_profile
+cmd_profile o--> profile_mgr
+main *--> argparse
+
+@enduml

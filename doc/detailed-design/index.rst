@@ -1,4 +1,4 @@
-.. template_python documentation master file.
+.. pyProfileMgr documentation master file.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
    This file is written in ``reStructuredText`` syntax. Dor documentation see:
@@ -8,31 +8,30 @@
    otherwise they will be overwritten by intputs from the project during sphinx generation
  
 .. <User editable section introduction>
+.. role:: raw-html-m2r(raw)
+   :format: html
 
-TBD Project Name
-================
+
+pyProfileMgr :raw-html-m2r:`<!-- omit in toc -->`
+=====================================================
 
 Overview
 --------
 
-..
 
-   TODO
+.. image:: https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/NewTec-GmbH/pyProfileMgr/main/doc/uml/overview.puml
+   :target: https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/NewTec-GmbH/pyProfileMgr/main/doc/uml/overview.puml
+   :alt: overview
 
+
+More information on the deployment and architecture can be found in the `doc <./doc/README.md>`_ folder.
 
 Usage
 -----
 
-..
+.. code-block:: cmd
 
-   TODO
-
-
-.. code-block:: bash
-
-   example [-h] [-v] {command} {command_options}
-
-Detailed descriptions of arguments
+   pyProfileMgr [-h] [--version] [-v] {command} ...
 
 .. </User editable section introduction>
 
@@ -55,7 +54,11 @@ Software Detailed Design
    :template: custom-module-template.rst
    :recursive:
 
-   template_python
+   cmd_profile
+   file_helper
+   profile_mgr
+   ret
+   __main__
 .. </User editable section source> 
 
 Testing
@@ -69,8 +72,7 @@ Software Detailed Design
    :template: custom-module-template.rst
    :recursive:
 
-   test_empty
-   test_empty2
+   test_01_profile
 
 .. </User editable section unittest> 
 
