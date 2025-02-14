@@ -77,12 +77,21 @@ def test_add_certificate():
     # Delete the profile if it already exists.
     sut.delete("test_profile")
 
+    # TC: Fail to add a certificate to a non-existing profile.
+    assert sut.add_certificate("test_profile", os.path.dirname(os.path.realpath(__file__))
+                               + "/test_data/testCertificate.cert") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+
+    # TC: Fail to add a non-existing certificate file to the profile.
+
     # Add a new profile (without certificate) and check if it was created successfully.
     assert sut.add("test_profile", ProfileType.JIRA, "testServer",
                    "testToken", "testUser", "testPassword", None) is Ret.CODE.RET_OK
     assert sut.load("test_profile") is Ret.CODE.RET_OK
 
-    # Add a certificate to the profile and check if it was added successfully.
+    assert sut.add_certificate("test_profile", os.path.dirname(os.path.realpath(__file__))
+                               + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
+
+    # TC: Add an existing certificate to the profile and check if it was added successfully.
     assert sut.add_certificate("test_profile", os.path.dirname(os.path.realpath(__file__))
                                + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
     assert sut.load("test_profile") is Ret.CODE.RET_OK
@@ -97,12 +106,17 @@ def test_add_token():
     # Delete the profile if it already exists.
     sut.delete("test_profile")
 
+    # TC: Fail to add a token to a non-existing profile.
+    assert sut.add_token(
+        "test_profile", "testToken") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+
+    # TC: Add a token to the profile and check if it was added successfully.
+
     # Add a new profile (without token) and check if it was created successfully.
     assert sut.add("test_profile", ProfileType.JIRA, "testServer",
                    None, "testUser", "testPassword", None) is Ret.CODE.RET_OK
     assert sut.load("test_profile") is Ret.CODE.RET_OK
 
-    # Add a token to the profile and check if it was added successfully.
     assert sut.add_token("test_profile", "testToken") is Ret.CODE.RET_OK
     assert sut.load("test_profile") is Ret.CODE.RET_OK
     assert sut.get_api_token() == "testToken"
@@ -113,9 +127,17 @@ def test_delete_profile():
 
     sut = ProfileMgr()
 
-    # Delete the profile (if it exists) and check if it was deleted successfully.
+    # TC: Delete a non-existing profile.
     sut.delete("test_profile")
     assert sut.load("test_profile") is not Ret.CODE.RET_OK
+
+    # TC: Delete a profile check that it was deleted successfully.
+
+    # Add a new profile and check if it was created successfully.
+    assert sut.add("test_profile", ProfileType.JIRA, "testServer",
+                   None, "testUser", "testPassword", None) is Ret.CODE.RET_OK
+
+    assert sut.load("test_profile") is Ret.CODE.RET_OK
 
 
 def test_getters():
@@ -126,6 +148,8 @@ def test_getters():
     # Delete the profile if it already exists.
     sut.delete("test_profile")
 
+    # TC: get_profiles
+
     # Add a new profile and check if it was created successfully.
     assert sut.add("test_profile", ProfileType.JIRA, "testServer",
                    "testToken", "testUser", "testPassword", os.path.dirname(
@@ -133,29 +157,28 @@ def test_getters():
                    + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
     assert sut.load("test_profile") is Ret.CODE.RET_OK
 
-    # get_profiles
     profiles = sut.get_profiles()
     assert "test_profile" in profiles
 
-    # get_name
+    # TC: get_name
     assert sut.get_name() == "test_profile"
 
-    # get_type
+    # TC: get_type
     assert sut.get_type() == ProfileType.JIRA
 
-    # get_server_url
+    # TC: get_server_url
     assert sut.get_server_url() == "testServer"
 
-    # get_api_token
+    # TC: get_api_token
     assert sut.get_api_token() == "testToken"
 
-    # get_user (expected to be None since the profile contains a token).
+    # TC: get_user (expected to be None since the profile contains a token).
     assert sut.get_user() is None
 
-    # get_password (expected to be None since the profile contains a token).
+    # TC: get_password (expected to be None since the profile contains a token).
     assert sut.get_password() is None
 
-    # get_cert_path
+    # TC: get_cert_path
     assert ".cert" in sut.get_cert_path()
 
 
