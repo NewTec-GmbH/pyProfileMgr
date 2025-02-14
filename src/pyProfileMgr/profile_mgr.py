@@ -76,8 +76,6 @@ class ProfileType(StrEnum):
     SUPERSET = 'superset'
 
 
-FILE_ATTRIBUTE_HIDDEN = 0x02
-
 ################################################################################
 # Classes
 ################################################################################
@@ -170,10 +168,9 @@ class ProfileMgr:
                 write_dict, profile_name, cert_path)
 
             if ret_status == Ret.CODE.RET_OK:
-                LOG.info(
-                    "Profile '%s' has successfully been created.", profile_name)
-                print(
-                    f"Successfully created profile '{profile_name}'.")
+                msg = f"Successfully created profile '{profile_name}'."
+                LOG.info(msg)
+                print(msg)
         else:
             LOG.info("Adding profile '%s' has bene canceled.", profile_name)
 
@@ -203,14 +200,9 @@ class ProfileMgr:
                     with open(profile_path + CERT_FILE, 'w', encoding="UTF-8") as cert_file_profile:
                         cert_file_profile.write(cert_data)
 
-                        if os.name == 'nt':
-                            ctypes.windll.kernel32.SetFileAttributesW(cert_file_profile.name,
-                                                                      FILE_ATTRIBUTE_HIDDEN)
-
-                        LOG.info("Successfully added certificate to profile '%s'.",
-                                 profile_name)
-                        print(
-                            f"Successfully added certificate to profile '{profile_name}'.")
+                        msg = f"Successfully added certificate to profile '{profile_name}'."
+                        LOG.info(msg)
+                        print(msg)
 
                 except FileNotFoundError:
                     ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
@@ -255,17 +247,11 @@ class ProfileMgr:
         try:
             with open(profile_path + DATA_FILE, 'w', encoding="UTF-8") as data_file:
                 data_file.write(profile_data)
-
-                if os.name == 'nt':
-                    ctypes.windll.kernel32.SetFileAttributesW(data_file.name,
-                                                              FILE_ATTRIBUTE_HIDDEN)
-
                 self._profile_token = api_token
 
-                LOG.info("Successfully added an API token to profile '%s'.",
-                         profile_name)
-                print(
-                    f"Successfully added an API token to profile '{profile_name}'.")
+                msg = f"Successfully added an API token to profile '{profile_name}'."
+                LOG.info(msg)
+                print(msg)
 
         except FileNotFoundError:
             ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
@@ -337,8 +323,9 @@ class ProfileMgr:
 
             os.rmdir(profile_path)
 
-            LOG.info("Successfully removed profile '%s'.", profile_name)
-            print(f"Successfully removed profile '{profile_name}'.")
+            msg = f"Successfully removed profile '{profile_name}'."
+            LOG.info(msg)
+            print(msg)
 
         else:
             LOG.error("Folder for profile '%s' does not exist", profile_name)
@@ -430,11 +417,6 @@ class ProfileMgr:
         if not os.path.exists(profiles_storage_path):
             os.makedirs(profiles_storage_path)
 
-            # Hide the folder on Windows systems.
-            if os.name == 'nt':
-                ctypes.windll.kernel32.SetFileAttributesW(profiles_storage_path,
-                                                          FILE_ATTRIBUTE_HIDDEN)
-
         return profiles_storage_path
 
     def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str) -> Ret.CODE:
@@ -457,10 +439,6 @@ class ProfileMgr:
         try:
             with open(profile_path + DATA_FILE, 'w', encoding="UTF-8") as data_file:
                 data_file.write(profile_data)
-
-                if os.name == 'nt':
-                    ctypes.windll.kernel32.SetFileAttributesW(data_file.name,
-                                                              FILE_ATTRIBUTE_HIDDEN)
         except FileNotFoundError:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 

@@ -131,7 +131,7 @@ def test_delete_profile():
     sut.delete("test_profile")
     assert sut.load("test_profile") is not Ret.CODE.RET_OK
 
-    # TC: Delete a profile check that it was deleted successfully.
+    # TC: Delete a profile and check that it was deleted successfully.
 
     # Add a new profile and check if it was created successfully.
     assert sut.add("test_profile", ProfileType.JIRA, "testServer",
