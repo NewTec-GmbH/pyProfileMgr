@@ -39,7 +39,7 @@ import os
 import ctypes
 import json
 import logging
-
+from dataclasses import dataclass
 try:
     from enum import StrEnum  # Available in Python 3.11+
 except ImportError:
@@ -48,9 +48,6 @@ except ImportError:
     class StrEnum(str, Enum):
         ''' Custom StrEnum class for Python versions < 3.11 '''
 
-from dataclasses import dataclass
-
-from pyProfileMgr.file_helper import FileHelper as File
 from pyProfileMgr.ret import Ret, Warnings
 
 
@@ -117,9 +114,11 @@ class ProfileMgr:
 
         Args:
             profile_name (str): The unique name of the profile.
+            profile_type (str): The type of the profile (e.g. JIRA, POLARION, SUPERSET).
             server_url (str): The server URL associated with the profile.
             token (str): The login token for authentication at the server (preferred).
-            user/password (str): The user/password for authentication at the server.
+            user (str): The user for authentication at the server.
+            password (str): The password for authentication at the server.
             cert_path (str): The file path to the profile's server certificate.
 
         Returns:
@@ -167,11 +166,14 @@ class ProfileMgr:
                 add_profile = False
 
         if add_profile:
-            ret_status = _add_new_profile(write_dict, profile_path, cert_path)
+            ret_status = self._add_new_profile(
+                write_dict, profile_name, cert_path)
 
             if ret_status == Ret.CODE.RET_OK:
-                LOG.info("Profile '%s' has successfully been created.",
-                         profile_name)
+                LOG.info(
+                    "Profile '%s' has successfully been created.", profile_name)
+                print(
+                    f"Successfully created profile '{profile_name}'.")
         else:
             LOG.info("Adding profile '%s' has bene canceled.", profile_name)
 
@@ -189,30 +191,32 @@ class ProfileMgr:
         """
         ret_status = Ret.CODE.RET_OK
 
-        _file = File()
         profile_path = self._profiles_storage_path + f"{profile_name}/"
+        if not os.path.exists(profile_path):
+            return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
-        if os.path.exists(cert_path):
-            ret_status = _file.set_filepath(cert_path)
-        else:
+        try:
+            with open(cert_path, 'r', encoding="UTF-8") as cert_file_src:
+                cert_data = cert_file_src.read()
+
+                try:
+                    with open(profile_path + CERT_FILE, 'w', encoding="UTF-8") as cert_file_profile:
+                        cert_file_profile.write(cert_data)
+
+                        if os.name == 'nt':
+                            ctypes.windll.kernel32.SetFileAttributesW(cert_file_profile.name,
+                                                                      FILE_ATTRIBUTE_HIDDEN)
+
+                        LOG.info("Successfully added certificate to profile '%s'.",
+                                 profile_name)
+                        print(
+                            f"Successfully added certificate to profile '{profile_name}'.")
+
+                except FileNotFoundError:
+                    ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
+
+        except FileNotFoundError:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
-
-        if ret_status == Ret.CODE.RET_OK:
-            ret_status = _file.read_file()
-
-        if ret_status == Ret.CODE.RET_OK:
-            cert_data = _file.get_file_content()
-            ret_status = _file.set_filepath(profile_path + CERT_FILE)
-
-        if ret_status == Ret.CODE.RET_OK:
-            if os.path.exists(profile_path + CERT_FILE):
-                os.remove(profile_path + CERT_FILE)
-
-            _file.write_file(cert_data)
-            _file.hide_file()
-
-            LOG.info("Successfully added a certificate to profile '%s'.",
-                     profile_name)
 
         return ret_status
 
@@ -232,8 +236,9 @@ class ProfileMgr:
         """
         ret_status = Ret.CODE.RET_OK
 
-        _file = File()
         profile_path = self._profiles_storage_path + f"{profile_name}/"
+        if not os.path.exists(profile_path):
+            return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         self.load(profile_name)
 
@@ -247,16 +252,23 @@ class ProfileMgr:
 
         profile_data = json.dumps(write_dict, indent=4)
 
-        ret_status = _file.set_filepath(profile_path + DATA_FILE)
+        try:
+            with open(profile_path + DATA_FILE, 'w', encoding="UTF-8") as data_file:
+                data_file.write(profile_data)
 
-        if ret_status == Ret.CODE.RET_OK:
-            _file.write_file(profile_data)
-            _file.hide_file()
+                if os.name == 'nt':
+                    ctypes.windll.kernel32.SetFileAttributesW(data_file.name,
+                                                              FILE_ATTRIBUTE_HIDDEN)
 
-            self._profile_token = api_token
+                self._profile_token = api_token
 
-            LOG.info("Successfully added an API token to profile '%s'.",
-                     profile_name)
+                LOG.info("Successfully added an API token to profile '%s'.",
+                         profile_name)
+                print(
+                    f"Successfully added an API token to profile '{profile_name}'.")
+
+        except FileNotFoundError:
+            ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         return ret_status
 
@@ -271,45 +283,45 @@ class ProfileMgr:
         """
         ret_status = Ret.CODE.RET_OK
 
-        _file = File()
-
         profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         if os.path.exists(profile_path):
-            ret_status = _file.set_filepath(profile_path + DATA_FILE)
+            try:
+                with open(profile_path + DATA_FILE, 'r', encoding="UTF-8") as data_file:
+                    profile_dict = json.load(data_file)
 
-            if ret_status == Ret.CODE.RET_OK:
-                _file.open_file('r')
-                profile_dict = json.load(_file.get_file())
+                    self._profile_name = profile_name
+                    self._profile_type = profile_dict[TYPE_KEY]
 
-                self._profile_name = profile_name
-                self._profile_type = profile_dict[TYPE_KEY]
+                    try:
+                        if not self._profile_type in ProfileType:
+                            return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
+                    except TypeError:
+                        # Ignore in case of Python version < 3.11
+                        pass
 
-                try:
-                    if not self._profile_type in ProfileType:
-                        return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
-                except TypeError:
-                    # Ignore in case of Python version < 3.11
-                    pass
+                    self._profile_server_url = profile_dict[SERVER_URL_KEY]
 
-                self._profile_server_url = profile_dict[SERVER_URL_KEY]
+                    if TOKEN_KEY in profile_dict:
+                        self._profile_token = profile_dict[TOKEN_KEY]
 
-                if TOKEN_KEY in profile_dict:
-                    self._profile_token = profile_dict[TOKEN_KEY]
+                    if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
+                        self._profile_user = profile_dict[USER_KEY]
+                        self._profile_password = profile_dict[PASSWORD_KEY]
 
-                if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
-                    self._profile_user = profile_dict[USER_KEY]
-                    self._profile_password = profile_dict[PASSWORD_KEY]
-
-                if os.path.exists(profile_path + CERT_FILE):
-                    self._profile_cert = profile_path + CERT_FILE
+                    if os.path.exists(profile_path + CERT_FILE):
+                        self._profile_cert = profile_path + CERT_FILE
+            except FileNotFoundError:
+                ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
         else:
             ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         return ret_status
 
     def delete(self, profile_name: str) -> None:
-        """_summary_
+        """ Deletes the profile with the specified name.
+
+        The method will remove the profile folder and all its content.
 
         Args:
             profile_name (str): _description_
@@ -326,12 +338,13 @@ class ProfileMgr:
             os.rmdir(profile_path)
 
             LOG.info("Successfully removed profile '%s'.", profile_name)
+            print(f"Successfully removed profile '{profile_name}'.")
 
         else:
             LOG.error("Folder for profile '%s' does not exist", profile_name)
 
     def get_profiles(self) -> list[str]:
-        """ Get a list of all stored profiles.
+        """ Gets a list of all stored profiles.
 
         Returns:
             [str]: List of all stored profiles.
@@ -424,46 +437,34 @@ class ProfileMgr:
 
         return profiles_storage_path
 
-################################################################################
-# Functions
-################################################################################
+    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str) -> Ret.CODE:
+        """ Adds a new server profile to the configuration.
 
+        Args:
+            write_dict (dict): Dictionary containing profile data to be written.
+            profile_name (str): The name of the profile to determine the path where it will be saved.
+            cert_path (str): Path to the server certificate associated with the profile.
 
-def _add_new_profile(write_dict: dict, profile_path: str, cert_path: str) -> Ret.CODE:
-    """ Adds a new server profile to the configuration.
+        Returns:
+            Ret.CODE: Status code indicating the success or failure of the profile addition.
+        """
 
-    Args:
-        write_dict (dict): Dictionary containing profile data to be written.
-        profile_path (str): Path where the profile data will be saved.
-        cert_path (str): Path to the server certificate associated with the profile.
+        ret_status = Ret.CODE.RET_OK
 
-    Returns:
-        Ret.CODE: Status code indicating the success or failure of the profile addition.
-    """
-    ret_status = Ret.CODE.RET_OK
-    _file = File()
-    profile_data = json.dumps(write_dict, indent=4)
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_data = json.dumps(write_dict, indent=4)
 
-    ret_status = _file.set_filepath(profile_path + DATA_FILE)
+        try:
+            with open(profile_path + DATA_FILE, 'w', encoding="UTF-8") as data_file:
+                data_file.write(profile_data)
 
-    if ret_status == Ret.CODE.RET_OK:
-        _file.write_file(profile_data)
-        _file.hide_file()
+                if os.name == 'nt':
+                    ctypes.windll.kernel32.SetFileAttributesW(data_file.name,
+                                                              FILE_ATTRIBUTE_HIDDEN)
+        except FileNotFoundError:
+            ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
-    if cert_path is not None and \
-       os.path.exists(cert_path):
-        ret_status = _file.set_filepath(cert_path)
+        if cert_path is not None:
+            ret_status = self.add_certificate(profile_name, cert_path)
 
-        if ret_status == Ret.CODE.RET_OK:
-            ret_status = _file.read_file()
-
-        if ret_status == Ret.CODE.RET_OK:
-            cert_data = _file.get_file_content()
-
-        ret_status = _file.set_filepath(profile_path + CERT_FILE)
-
-        if ret_status == Ret.CODE.RET_OK:
-            _file.write_file(cert_data)
-            _file.hide_file()
-
-    return ret_status
+        return ret_status
