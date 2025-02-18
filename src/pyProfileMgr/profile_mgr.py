@@ -273,6 +273,7 @@ class ProfileMgr:
                 try:
                     # TRICKY: Do not use 'contains' since that has several issues
                     # with StrEnum, which differ in multiple Python versions.
+                    # pylint: disable=E1121
                     self._profile_type = ProfileType(profile_dict[TYPE_KEY])
                 except ValueError:
                     return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
