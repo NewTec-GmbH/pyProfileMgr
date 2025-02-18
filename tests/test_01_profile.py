@@ -145,6 +145,12 @@ def test_delete_profile(profile_mgr: ProfileMgr):
 
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
+    try:
+        profile_mgr.delete(TEST_PROFILE_NAME)
+    # pylint: disable=W0718
+    except Exception as exc:
+        pytest.fail(f"Unexpected exception: {exc}")
+
 
 def test_getters(profile_mgr: ProfileMgr):
     """Tests the getters of the profile manager."""
@@ -182,6 +188,9 @@ def test_getters(profile_mgr: ProfileMgr):
     # TC: get_cert_path
     assert ".cert" in profile_mgr.get_cert_path()
 
+
+def test_invalid_type(profile_mgr: ProfileMgr):
+    ''' Tests that loading a profile with an unknown type fails. '''
 
 ################################################################################
 # Main
