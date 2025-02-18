@@ -34,6 +34,7 @@
 ################################################################################
 
 import os
+import pytest
 
 from pyProfileMgr.profile_mgr import ProfileMgr, ProfileType
 from pyProfileMgr.ret import Ret
@@ -43,6 +44,9 @@ from pyProfileMgr.ret import Ret
 # Variables
 ################################################################################
 
+TEST_PROFILE_NAME = 'test_profile'
+
+
 ################################################################################
 # Classes
 ################################################################################
@@ -51,135 +55,128 @@ from pyProfileMgr.ret import Ret
 # Functions
 ################################################################################
 
-def test_add_profile():
+
+# pylint: disable=W0621
+@pytest.fixture(autouse=True)
+def profile_mgr():
+    ''' Manages setup and teardown of the ProfileManager. '''
+
+    # Setup: Create profile manager and delete the test profile from previous runs
+    # (if it exists).
+    profile_manager = ProfileMgr()
+    profile_manager.delete(TEST_PROFILE_NAME)
+    assert profile_manager.load(
+        TEST_PROFILE_NAME) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+
+    yield profile_manager
+
+    # Teardown code goes here.
+
+
+def test_add_profile(profile_mgr: ProfileMgr):
     """Tests the creation of a new profile."""
 
-    sut = ProfileMgr()
-
-    # Delete the profile if it already exists.
-    sut.delete("test_profile")
-
     # Add a new profile and check if it was created successfully.
-    assert sut.add("test_profile", ProfileType.JIRA, "testServer",
-                   "testToken", "testUser", "testPassword", None) is Ret.CODE.RET_OK
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, "testServer",
+                           "testToken", "testUser", "testPassword", None) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     # Delete the profile and check if it was deleted successfully.
-    sut.delete("test_profile")
-    assert sut.load("test_profile") is not Ret.CODE.RET_OK
+    profile_mgr.delete(TEST_PROFILE_NAME)
+    assert profile_mgr.load(TEST_PROFILE_NAME) is not Ret.CODE.RET_OK
 
 
-def test_add_certificate():
+def test_add_certificate(profile_mgr: ProfileMgr):
     """Tests the extension of an existing profile with a certificate."""
 
-    sut = ProfileMgr()
-
-    # Delete the profile if it already exists.
-    sut.delete("test_profile")
-
     # TC: Fail to add a certificate to a non-existing profile.
-    assert sut.add_certificate("test_profile", os.path.dirname(os.path.realpath(__file__))
-                               + "/test_data/testCertificate.cert") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+    assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
+                                       + "/test_data/testCertificate.cert") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
     # TC: Fail to add a non-existing certificate file to the profile.
 
     # Add a new profile (without certificate) and check if it was created successfully.
-    assert sut.add("test_profile", ProfileType.JIRA, "testServer",
-                   "testToken", "testUser", "testPassword", None) is Ret.CODE.RET_OK
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, "testServer",
+                           "testToken", "testUser", "testPassword", None) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
-    assert sut.add_certificate("test_profile", os.path.dirname(os.path.realpath(__file__))
-                               + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
+    assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
+                                       + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
     # TC: Add an existing certificate to the profile and check if it was added successfully.
-    assert sut.add_certificate("test_profile", os.path.dirname(os.path.realpath(__file__))
-                               + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
-    assert sut.get_cert_path() is not None
+    assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
+                                       + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert profile_mgr.get_cert_path() is not None
 
 
-def test_add_token():
+def test_add_token(profile_mgr: ProfileMgr):
     """Tests the extension of an existing profile with a token."""
 
-    sut = ProfileMgr()
-
-    # Delete the profile if it already exists.
-    sut.delete("test_profile")
-
     # TC: Fail to add a token to a non-existing profile.
-    assert sut.add_token(
-        "test_profile", "testToken") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+    assert profile_mgr.add_token(
+        TEST_PROFILE_NAME, "testToken") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
     # TC: Add a token to the profile and check if it was added successfully.
 
     # Add a new profile (without token) and check if it was created successfully.
-    assert sut.add("test_profile", ProfileType.JIRA, "testServer",
-                   None, "testUser", "testPassword", None) is Ret.CODE.RET_OK
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, "testServer",
+                           None, "testUser", "testPassword", None) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
-    assert sut.add_token("test_profile", "testToken") is Ret.CODE.RET_OK
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
-    assert sut.get_api_token() == "testToken"
+    assert profile_mgr.add_token(
+        TEST_PROFILE_NAME, "testToken") is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert profile_mgr.get_api_token() == "testToken"
 
 
-def test_delete_profile():
+def test_delete_profile(profile_mgr: ProfileMgr):
     """Tests the deletion of a new profile."""
-
-    sut = ProfileMgr()
-
-    # TC: Delete a non-existing profile.
-    sut.delete("test_profile")
-    assert sut.load("test_profile") is not Ret.CODE.RET_OK
 
     # TC: Delete a profile and check that it was deleted successfully.
 
     # Add a new profile and check if it was created successfully.
-    assert sut.add("test_profile", ProfileType.JIRA, "testServer",
-                   None, "testUser", "testPassword", None) is Ret.CODE.RET_OK
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, "testServer",
+                           None, "testUser", "testPassword", None) is Ret.CODE.RET_OK
 
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
 
-def test_getters():
+def test_getters(profile_mgr: ProfileMgr):
     """Tests the getters of the profile manager."""
-
-    sut = ProfileMgr()
-
-    # Delete the profile if it already exists.
-    sut.delete("test_profile")
 
     # TC: get_profiles
 
-    # Add a new profile and check if it was created successfully.
-    assert sut.add("test_profile", ProfileType.JIRA, "testServer",
-                   "testToken", "testUser", "testPassword", os.path.dirname(
-                       os.path.realpath(__file__))
-                   + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
-    assert sut.load("test_profile") is Ret.CODE.RET_OK
+    # Add a new profile including certificate and check if it was created successfully.
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, "testServer",
+                           "testToken", "testUser", "testPassword", os.path.dirname(
+                               os.path.realpath(__file__))
+                           + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
-    profiles = sut.get_profiles()
-    assert "test_profile" in profiles
+    profiles = profile_mgr.get_profiles()
+    assert TEST_PROFILE_NAME in profiles
 
     # TC: get_name
-    assert sut.get_name() == "test_profile"
+    assert profile_mgr.get_name() == TEST_PROFILE_NAME
 
     # TC: get_type
-    assert sut.get_type() == ProfileType.JIRA
+    assert profile_mgr.get_type() == ProfileType.POLARION
 
     # TC: get_server_url
-    assert sut.get_server_url() == "testServer"
+    assert profile_mgr.get_server_url() == "testServer"
 
     # TC: get_api_token
-    assert sut.get_api_token() == "testToken"
+    assert profile_mgr.get_api_token() == "testToken"
 
     # TC: get_user (expected to be None since the profile contains a token).
-    assert sut.get_user() is None
+    assert profile_mgr.get_user() is None
 
     # TC: get_password (expected to be None since the profile contains a token).
-    assert sut.get_password() is None
+    assert profile_mgr.get_password() is None
 
     # TC: get_cert_path
-    assert ".cert" in sut.get_cert_path()
+    assert ".cert" in profile_mgr.get_cert_path()
 
 
 ################################################################################
