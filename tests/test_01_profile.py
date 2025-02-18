@@ -33,10 +33,11 @@
 # Imports
 ################################################################################
 
+import json
 import os
 import pytest
 
-from pyProfileMgr.profile_mgr import ProfileMgr, ProfileType
+from pyProfileMgr.profile_mgr import ProfileMgr, ProfileType, DATA_FILE
 from pyProfileMgr.ret import Ret
 
 
@@ -107,7 +108,7 @@ def test_add_certificate(profile_mgr: ProfileMgr):
     assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
                                        + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
-    # TC: Add an existing certificate to the profile and check if it was added successfully.
+    # TC: All OK - add an existing certificate to the profile and check if it was added successfully.
     assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
                                        + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
@@ -121,7 +122,7 @@ def test_add_token(profile_mgr: ProfileMgr):
     assert profile_mgr.add_token(
         TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
-    # TC: Add a token to the profile and check if it was added successfully.
+    # TC: All OK - Add a token to the profile and check if it was added successfully.
 
     # Add a new profile (without token) and check if it was created successfully.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
@@ -137,14 +138,13 @@ def test_add_token(profile_mgr: ProfileMgr):
 def test_delete_profile(profile_mgr: ProfileMgr):
     """Tests the deletion of a new profile."""
 
-    # TC: Delete a profile and check that it was deleted successfully.
-
     # Add a new profile and check if it was created successfully.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
 
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
+    # TC: Delete a profile and check that it was deleted successfully.
     try:
         profile_mgr.delete(TEST_PROFILE_NAME)
     # pylint: disable=W0718
@@ -190,7 +190,30 @@ def test_getters(profile_mgr: ProfileMgr):
 
 
 def test_invalid_type(profile_mgr: ProfileMgr):
-    ''' Tests that loading a profile with an unknown type fails. '''
+    """Tests that loading a profile with an unknown type fails."""
+
+    # Create a profile and make its type invalid on disk.
+
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
+                           None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+
+    data_file_path = profile_mgr.get_profiles_folder() + TEST_PROFILE_NAME + \
+        "/" + DATA_FILE
+
+    profile_dict = None
+    with open(data_file_path, 'r+', encoding="UTF-8") as data_file:
+        profile_dict = json.load(data_file)
+        profile_dict['type'] = 'invalid'
+
+        data_file.seek(0)
+        data_file.write(json.dumps(profile_dict, indent=4))
+        data_file.truncate()
+
+    # TC: Fail to load invalid profile.
+    assert profile_mgr.load(
+        TEST_PROFILE_NAME) is Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
+
 
 ################################################################################
 # Main

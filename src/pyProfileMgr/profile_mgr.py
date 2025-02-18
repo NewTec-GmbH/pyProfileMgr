@@ -412,6 +412,10 @@ class ProfileMgr:
 
         return profiles_storage_path
 
+    def get_profiles_folder(self) -> str:
+        """Returns the path to the profiles storage folder."""
+        return self._profiles_storage_path
+
     def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str) -> Ret.CODE:
         """ Adds a new server profile to the configuration.
 
