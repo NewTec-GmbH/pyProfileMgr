@@ -94,8 +94,9 @@ class ProfileMgr:
         self._profile_user = None
         self._profile_password = None
         self._profile_cert = None
+        self._profiles_storage_path = None
 
-        self._profiles_storage_path = self._prepare_profiles_folder()
+        self._reset()
 
     # pylint: disable=R0912, R0913, R0917
 
@@ -171,7 +172,7 @@ class ProfileMgr:
                 LOG.info(msg)
                 print(msg)
         else:
-            LOG.info("Adding profile '%s' has bene canceled.", profile_name)
+            LOG.info("Adding profile '%s' has been canceled.", profile_name)
 
         return ret_status
 
@@ -221,13 +222,9 @@ class ProfileMgr:
         Returns:
             Ret.CODE: A status code indicating the result of the operation.
         """
-        ret_status = Ret.CODE.RET_OK
-
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
-        if not os.path.exists(profile_path):
-            return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
-
-        self.load(profile_name)
+        ret_status = self.load(profile_name)
+        if ret_status != Ret.CODE.RET_OK:
+            return ret_status
 
         write_dict = {
             TYPE_KEY: self._profile_type,
@@ -235,12 +232,11 @@ class ProfileMgr:
             TOKEN_KEY: api_token
         }
 
-        os.remove(profile_path + DATA_FILE)
-
-        profile_data = json.dumps(write_dict, indent=4)
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
 
         try:
             with self._open_file(profile_path + DATA_FILE, 'w') as data_file:
+                profile_data = json.dumps(write_dict, indent=4)
                 data_file.write(profile_data)
                 self._profile_token = api_token
 
@@ -249,51 +245,7 @@ class ProfileMgr:
                 print(msg)
 
         except IOError:
-            ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
-
-        return ret_status
-
-    def load(self, profile_name: str) -> Ret.CODE:
-        """ Loads the profile with the specified name.
-
-        Args:
-            profile_name (str): The name of the server profile to load.
-
-        Returns:
-            Ret.CODE: Status code indicating the success or failure of the load operation.
-        """
-        ret_status = Ret.CODE.RET_OK
-
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
-
-        try:
-            with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
-                profile_dict = json.load(data_file)
-
-                try:
-                    # TRICKY: Do not use 'contains' since that has several issues
-                    # with StrEnum, which differ in multiple Python versions.
-                    # pylint: disable=E1121
-                    self._profile_type = ProfileType(profile_dict[TYPE_KEY])
-                except ValueError:
-                    return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
-
-                self._profile_name = profile_name
-                self._profile_type = profile_dict[TYPE_KEY]
-                self._profile_server_url = profile_dict[SERVER_URL_KEY]
-
-                if TOKEN_KEY in profile_dict:
-                    self._profile_token = profile_dict[TOKEN_KEY]
-
-                if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
-                    self._profile_user = profile_dict[USER_KEY]
-                    self._profile_password = profile_dict[PASSWORD_KEY]
-
-                if os.path.exists(profile_path + CERT_FILE):
-                    self._profile_cert = profile_path + CERT_FILE
-
-        except IOError:
-            ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+            ret_status = Ret.CODE.RET_ERROR_FILE_OPEN_FAILED
 
         return ret_status
 
@@ -337,6 +289,52 @@ class ProfileMgr:
                 profile_names.append(file_name)
 
         return profile_names
+
+    def load(self, profile_name: str) -> Ret.CODE:
+        """ Loads the profile with the specified name.
+
+        Args:
+            profile_name (str): The name of the server profile to load.
+
+        Returns:
+            Ret.CODE: Status code indicating the success or failure of the load operation.
+        """
+        self._reset()
+
+        ret_status = Ret.CODE.RET_OK
+
+        profile_path = self._profiles_storage_path + f"{profile_name}/"
+
+        try:
+            with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
+                profile_dict = json.load(data_file)
+
+                try:
+                    # TRICKY: Do not use 'contains' since that has several issues
+                    # with StrEnum, which differ in multiple Python versions.
+                    # pylint: disable=E1121
+                    self._profile_type = ProfileType(profile_dict[TYPE_KEY])
+                except ValueError:
+                    return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
+
+                self._profile_name = profile_name
+                self._profile_type = profile_dict[TYPE_KEY]
+                self._profile_server_url = profile_dict[SERVER_URL_KEY]
+
+                if TOKEN_KEY in profile_dict:
+                    self._profile_token = profile_dict[TOKEN_KEY]
+
+                if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
+                    self._profile_user = profile_dict[USER_KEY]
+                    self._profile_password = profile_dict[PASSWORD_KEY]
+
+                if os.path.exists(profile_path + CERT_FILE):
+                    self._profile_cert = profile_path + CERT_FILE
+
+        except IOError:
+            ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+
+        return ret_status
 
     def get_name(self) -> str:
         """ Returns the name of the loaded profile.
@@ -415,6 +413,18 @@ class ProfileMgr:
     def get_profiles_folder(self) -> str:
         """Returns the path to the profiles storage folder."""
         return self._profiles_storage_path
+
+    def _reset(self):
+        """ Initializes class members. """
+        self._profile_name = None
+        self._profile_type = None
+        self._profile_server_url = None
+        self._profile_token = None
+        self._profile_user = None
+        self._profile_password = None
+        self._profile_cert = None
+
+        self._profiles_storage_path = self._prepare_profiles_folder()
 
     def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str) -> Ret.CODE:
         """ Adds a new server profile to the configuration.

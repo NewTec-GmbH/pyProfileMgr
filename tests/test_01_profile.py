@@ -35,6 +35,8 @@
 
 import json
 import os
+import stat
+
 import pytest
 
 from pyProfileMgr.profile_mgr import ProfileMgr, ProfileType, DATA_FILE
@@ -50,6 +52,8 @@ TEST_SERVER = 'testServer'
 TEST_TOKEN = 'testToken'
 TEST_USER = 'testUser'
 TEST_PASSWORD = 'testPassword'
+TEST_CERT_PATH = TEST_CERT_PATH = os.path.dirname(os.path.realpath(__file__)) + \
+    "/test_data/testCertificate.cert"
 
 
 ################################################################################
@@ -78,25 +82,39 @@ def profile_mgr():
     # Teardown code goes here.
 
 
-def test_add_profile(profile_mgr: ProfileMgr):
+def test_add_profile(profile_mgr: ProfileMgr, monkeypatch):
     """Tests the creation of a new profile."""
 
-    # Add a new profile and check if it was created successfully.
+    # TC: Fail to add a profile without credentials (neither token, nor user/password).
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
-                           TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
+                           None, None, None, None) is Ret.CODE.RET_ERROR_MISSING_CREDENTIALS
+
+    # TC: All OK - add a new profile and check if it was created successfully.
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
+                           TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
-    # Delete the profile and check if it was deleted successfully.
-    profile_mgr.delete(TEST_PROFILE_NAME)
-    assert profile_mgr.load(TEST_PROFILE_NAME) is not Ret.CODE.RET_OK
+    # TC: All OK - overwrite existing profile.
+    monkeypatch.setattr('builtins.input', lambda _: "y")
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, TEST_SERVER,
+                           TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert profile_mgr.get_type() == ProfileType.POLARION
+
+    # TC: All OK - do not overwrite existing profile (type remains 'polarion').
+    monkeypatch.setattr('builtins.input', lambda _: "n")
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
+                           TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert profile_mgr.get_type() == ProfileType.POLARION
 
 
 def test_add_certificate(profile_mgr: ProfileMgr):
     """Tests the extension of an existing profile with a certificate."""
 
     # TC: Fail to add a certificate to a non-existing profile.
-    assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
-                                       + "/test_data/testCertificate.cert") is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+    assert profile_mgr.add_certificate(
+        TEST_PROFILE_NAME, TEST_CERT_PATH) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
     # TC: Fail to add a non-existing certificate file to the profile.
 
@@ -109,10 +127,16 @@ def test_add_certificate(profile_mgr: ProfileMgr):
                                        + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
     # TC: All OK - add an existing certificate to the profile and check if it was added successfully.
-    assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
-                                       + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
+    assert profile_mgr.add_certificate(
+        TEST_PROFILE_NAME, TEST_CERT_PATH) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
     assert profile_mgr.get_cert_path() is not None
+
+
+NO_USER_WRITING = ~stat.S_IWUSR
+NO_GROUP_WRITING = ~stat.S_IWGRP
+NO_OTHER_WRITING = ~stat.S_IWOTH
+NO_WRITING = NO_USER_WRITING & NO_GROUP_WRITING & NO_OTHER_WRITING
 
 
 def test_add_token(profile_mgr: ProfileMgr):
@@ -122,17 +146,27 @@ def test_add_token(profile_mgr: ProfileMgr):
     assert profile_mgr.add_token(
         TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
-    # TC: All OK - Add a token to the profile and check if it was added successfully.
-
     # Add a new profile (without token) and check if it was created successfully.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
+    # TC: All OK - Add a token to the profile and check if it was added successfully.
+
     assert profile_mgr.add_token(
         TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
     assert profile_mgr.get_api_token() == TEST_TOKEN
+
+    # TC: Fail to add token if data file is read-only.
+    data_file_path = profile_mgr.get_profiles_folder() + TEST_PROFILE_NAME + \
+        "/" + DATA_FILE
+    backup_permissions = stat.S_IMODE(os.lstat(data_file_path).st_mode)
+    os.chmod(data_file_path, backup_permissions & NO_WRITING)
+    assert profile_mgr.add_token(
+        TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_ERROR_FILE_OPEN_FAILED
+    # Restore the previous permissions.
+    os.chmod(data_file_path, backup_permissions)
 
 
 def test_delete_profile(profile_mgr: ProfileMgr):
@@ -159,9 +193,7 @@ def test_getters(profile_mgr: ProfileMgr):
 
     # Add a new profile including certificate and check if it was created successfully.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, TEST_SERVER,
-                           TEST_TOKEN, TEST_USER, TEST_PASSWORD, os.path.dirname(
-                               os.path.realpath(__file__))
-                           + "/test_data/testCertificate.cert") is Ret.CODE.RET_OK
+                           TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     profiles = profile_mgr.get_profiles()
