@@ -270,16 +270,18 @@ class ProfileMgr:
             with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
                 profile_dict = json.load(data_file)
 
-                self._profile_name = profile_name
-                self._profile_type = profile_dict[TYPE_KEY]
-
                 try:
-                    if not self._profile_type in ProfileType:
+                    # pylint: disable=E1121
+                    if ProfileType(profile_dict[TYPE_KEY]) not in ProfileType:
                         return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
                 except TypeError:
-                    # Ignore in case of Python version < 3.11
-                    pass
+                    # Raised in case of Python version < 3.12.
+                    return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
+                except ValueError:
+                    return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
 
+                self._profile_name = profile_name
+                self._profile_type = profile_dict[TYPE_KEY]
                 self._profile_server_url = profile_dict[SERVER_URL_KEY]
 
                 if TOKEN_KEY in profile_dict:
