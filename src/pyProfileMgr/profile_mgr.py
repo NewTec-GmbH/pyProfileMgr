@@ -271,12 +271,9 @@ class ProfileMgr:
                 profile_dict = json.load(data_file)
 
                 try:
-                    # pylint: disable=E1121
-                    if ProfileType(profile_dict[TYPE_KEY]) not in ProfileType:
-                        return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
-                except TypeError:
-                    # Raised in case of Python version < 3.12.
-                    return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
+                    # TRICKY: Do not use 'contains' since that has several issues
+                    # with StrEnum, which differ in multiple Python versions.
+                    self._profile_type = ProfileType(profile_dict[TYPE_KEY])
                 except ValueError:
                     return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
 
