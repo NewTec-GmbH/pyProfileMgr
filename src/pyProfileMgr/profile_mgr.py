@@ -192,21 +192,17 @@ class ProfileMgr:
             return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         try:
-            with open(cert_path, 'r', encoding="UTF-8") as cert_file_src:
+            with self._open_file(cert_path, 'r') as cert_file_src:
                 cert_data = cert_file_src.read()
 
-                try:
-                    with open(profile_path + CERT_FILE, 'w', encoding="UTF-8") as cert_file_profile:
-                        cert_file_profile.write(cert_data)
+                with self._open_file(profile_path + CERT_FILE, 'w') as cert_file_profile:
+                    cert_file_profile.write(cert_data)
 
-                        msg = f"Successfully added certificate to profile '{profile_name}'."
-                        LOG.info(msg)
-                        print(msg)
+                    msg = f"Successfully added certificate to profile '{profile_name}'."
+                    LOG.info(msg)
+                    print(msg)
 
-                except FileNotFoundError:
-                    ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
-
-        except FileNotFoundError:
+        except IOError:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
         return ret_status
@@ -244,7 +240,7 @@ class ProfileMgr:
         profile_data = json.dumps(write_dict, indent=4)
 
         try:
-            with open(profile_path + DATA_FILE, 'w', encoding="UTF-8") as data_file:
+            with self._open_file(profile_path + DATA_FILE, 'w') as data_file:
                 data_file.write(profile_data)
                 self._profile_token = api_token
 
@@ -252,7 +248,7 @@ class ProfileMgr:
                 LOG.info(msg)
                 print(msg)
 
-        except FileNotFoundError:
+        except IOError:
             ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         return ret_status
@@ -270,35 +266,33 @@ class ProfileMgr:
 
         profile_path = self._profiles_storage_path + f"{profile_name}/"
 
-        if os.path.exists(profile_path):
-            try:
-                with open(profile_path + DATA_FILE, 'r', encoding="UTF-8") as data_file:
-                    profile_dict = json.load(data_file)
+        try:
+            with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
+                profile_dict = json.load(data_file)
 
-                    self._profile_name = profile_name
-                    self._profile_type = profile_dict[TYPE_KEY]
+                self._profile_name = profile_name
+                self._profile_type = profile_dict[TYPE_KEY]
 
-                    try:
-                        if not self._profile_type in ProfileType:
-                            return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
-                    except TypeError:
-                        # Ignore in case of Python version < 3.11
-                        pass
+                try:
+                    if not self._profile_type in ProfileType:
+                        return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
+                except TypeError:
+                    # Ignore in case of Python version < 3.11
+                    pass
 
-                    self._profile_server_url = profile_dict[SERVER_URL_KEY]
+                self._profile_server_url = profile_dict[SERVER_URL_KEY]
 
-                    if TOKEN_KEY in profile_dict:
-                        self._profile_token = profile_dict[TOKEN_KEY]
+                if TOKEN_KEY in profile_dict:
+                    self._profile_token = profile_dict[TOKEN_KEY]
 
-                    if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
-                        self._profile_user = profile_dict[USER_KEY]
-                        self._profile_password = profile_dict[PASSWORD_KEY]
+                if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
+                    self._profile_user = profile_dict[USER_KEY]
+                    self._profile_password = profile_dict[PASSWORD_KEY]
 
-                    if os.path.exists(profile_path + CERT_FILE):
-                        self._profile_cert = profile_path + CERT_FILE
-            except FileNotFoundError:
-                ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
-        else:
+                if os.path.exists(profile_path + CERT_FILE):
+                    self._profile_cert = profile_path + CERT_FILE
+
+        except IOError:
             ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         return ret_status
@@ -436,12 +430,40 @@ class ProfileMgr:
         profile_data = json.dumps(write_dict, indent=4)
 
         try:
-            with open(profile_path + DATA_FILE, 'w', encoding="UTF-8") as data_file:
+            with self._open_file(profile_path + DATA_FILE, 'w') as data_file:
                 data_file.write(profile_data)
-        except FileNotFoundError:
+
+        except IOError:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
         if cert_path is not None:
             ret_status = self.add_certificate(profile_name, cert_path)
 
         return ret_status
+
+    # pylint: disable=R1732
+    def _open_file(self, file_path: str, mode: str) -> any:
+        """ Opens a file (encoding="UTF-8") in the given mode.
+
+        Args:
+            file_path (str): The path to the file to open.
+            mode (str): The mode to open the file in.
+
+        Returns:
+            file: The opened file.
+
+        Raises:
+            IOError: If the file does not exist.
+            IOError: If the file cannot be accessed.
+            IOError: If the file cannot be opened.
+        """
+        try:
+            file = open(file_path, mode, encoding="UTF-8")
+            return file
+
+        except FileNotFoundError as exc:
+            raise IOError(f"File '{file_path}' not found.") from exc
+        except PermissionError as exc:
+            raise IOError(f"Permission denied for '{file_path}'.") from exc
+        except Exception as exc:
+            raise IOError(f"Error opening file '{file_path}': {exc}") from exc
