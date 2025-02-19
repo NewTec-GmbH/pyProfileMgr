@@ -99,14 +99,14 @@ def test_add_profile(profile_mgr: ProfileMgr, monkeypatch):
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.get_type() == ProfileType.POLARION
+    assert profile_mgr.profile_type == ProfileType.POLARION
 
     # TC: All OK - do not overwrite existing profile (type remains 'polarion').
     monkeypatch.setattr('builtins.input', lambda _: "n")
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.get_type() == ProfileType.POLARION
+    assert profile_mgr.profile_type == ProfileType.POLARION
 
 
 def test_add_certificate(profile_mgr: ProfileMgr):
@@ -130,7 +130,7 @@ def test_add_certificate(profile_mgr: ProfileMgr):
     assert profile_mgr.add_certificate(
         TEST_PROFILE_NAME, TEST_CERT_PATH) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.get_cert_path() is not None
+    assert profile_mgr.cert_path is not None
 
 
 NO_USER_WRITING = ~stat.S_IWUSR
@@ -156,10 +156,10 @@ def test_add_token(profile_mgr: ProfileMgr):
     assert profile_mgr.add_token(
         TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.get_api_token() == TEST_TOKEN
+    assert profile_mgr.api_token == TEST_TOKEN
 
     # TC: Fail to add token if data file is read-only.
-    data_file_path = profile_mgr.get_profiles_folder() + TEST_PROFILE_NAME + \
+    data_file_path = profile_mgr.profiles_folder + TEST_PROFILE_NAME + \
         "/" + DATA_FILE
     backup_permissions = stat.S_IMODE(os.lstat(data_file_path).st_mode)
     os.chmod(data_file_path, backup_permissions & NO_WRITING)
@@ -200,25 +200,25 @@ def test_getters(profile_mgr: ProfileMgr):
     assert TEST_PROFILE_NAME in profiles
 
     # TC: get_name
-    assert profile_mgr.get_name() == TEST_PROFILE_NAME
+    assert profile_mgr.profile_name == TEST_PROFILE_NAME
 
     # TC: get_type
-    assert profile_mgr.get_type() == ProfileType.POLARION
+    assert profile_mgr.profile_type == ProfileType.POLARION
 
     # TC: get_server_url
-    assert profile_mgr.get_server_url() == TEST_SERVER
+    assert profile_mgr.server_url == TEST_SERVER
 
     # TC: get_api_token
-    assert profile_mgr.get_api_token() == TEST_TOKEN
+    assert profile_mgr.api_token == TEST_TOKEN
 
     # TC: get_user (expected to be None since the profile contains a token).
-    assert profile_mgr.get_user() is None
+    assert profile_mgr.username is None
 
     # TC: get_password (expected to be None since the profile contains a token).
-    assert profile_mgr.get_password() is None
+    assert profile_mgr.password is None
 
     # TC: get_cert_path
-    cert_path = profile_mgr.get_cert_path()
+    cert_path = profile_mgr.cert_path
     assert cert_path and ".cert" in cert_path
 
 
@@ -231,7 +231,7 @@ def test_invalid_type(profile_mgr: ProfileMgr):
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
     assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
-    data_file_path = profile_mgr.get_profiles_folder() + TEST_PROFILE_NAME + \
+    data_file_path = profile_mgr.profiles_folder + TEST_PROFILE_NAME + \
         "/" + DATA_FILE
 
     profile_dict = None

@@ -68,14 +68,6 @@ USER_KEY = 'user'
 PASSWORD_KEY = 'password'
 
 
-@dataclass
-class ProfileType(StrEnum):
-    """ The profile types."""
-    JIRA = 'jira'  # type: ignore
-    POLARION = 'polarion'  # type: ignore
-    SUPERSET = 'superset'  # type: ignore
-
-
 ################################################################################
 # Functions
 ################################################################################
@@ -103,6 +95,14 @@ def prepare_profiles_folder() -> str:
 # Classes
 ################################################################################
 
+@dataclass
+class ProfileType(StrEnum):
+    """ The profile types."""
+    JIRA = 'jira'  # type: ignore
+    POLARION = 'polarion'  # type: ignore
+    SUPERSET = 'superset'  # type: ignore
+
+
 class ProfileMgr:
     """ The ProfileMgr class handles all  processes regarding server profiles.
         This includes adding, deleting or configuring profile data.
@@ -121,6 +121,74 @@ class ProfileMgr:
         self._profile_cert = None
 
     # pylint: disable=R0912, R0913, R0917
+
+    @property
+    def profile_name(self) -> Optional[str]:
+        """ Returns the name of the loaded profile.
+
+        Returns:
+            str: The name of the profile.
+        """
+        return self._profile_name
+
+    @property
+    def profile_type(self) -> Optional[ProfileType]:
+        """ Returns the type of the loaded profile.
+
+        Returns:
+            str: The profile type.
+        """
+        return self._profile_type
+
+    @property
+    def server_url(self) -> Optional[str]:
+        """ Retrieves the server URL associated with the profile.
+
+        Returns:
+            str: The server URL used by the profile.
+        """
+        return self._profile_server_url
+
+    @property
+    def api_token(self) -> Optional[str]:
+        """ Retrieves the API token associated with the profile.
+
+        Returns:
+            str: The API token used by the profile for authentication.
+        """
+        return self._profile_token
+
+    @property
+    def username(self) -> Optional[str]:
+        """ Retrieves the username associated with the profile.
+
+        Returns:
+            str: The username provided in the profile for authentication at the server.
+        """
+        return self._profile_user
+
+    @property
+    def password(self) -> Optional[str]:
+        """ Retrieves the password associated with the profile.
+
+        Returns:
+            str: The password provided in the profile for authentication at the server.
+        """
+        return self._profile_password
+
+    @property
+    def cert_path(self) -> Optional[str]:
+        """ Retrieves the file path to the server certificate.
+
+        Returns:
+            str: The file path of the server certificate used by the profile.
+        """
+        return self._profile_cert
+
+    @property
+    def profiles_folder(self) -> str:
+        """Returns the path to the profiles storage folder."""
+        return self.profiles_storage_path
 
     def add(self,
             profile_name: str,
@@ -357,66 +425,6 @@ class ProfileMgr:
             ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
         return ret_status
-
-    def get_name(self) -> Optional[str]:
-        """ Returns the name of the loaded profile.
-
-        Returns:
-            str: The name of the profile.
-        """
-        return self._profile_name
-
-    def get_type(self) -> Optional[ProfileType]:
-        """ Returns the type of the loaded profile.
-
-        Returns:
-            str: The profile type.
-        """
-        return self._profile_type
-
-    def get_server_url(self) -> Optional[str]:
-        """ Retrieves the server URL associated with the profile.
-
-        Returns:
-            str: The server URL used by the profile.
-        """
-        return self._profile_server_url
-
-    def get_api_token(self) -> Optional[str]:
-        """ Retrieves the API token associated with the profile.
-
-        Returns:
-            str: The API token used by the profile for authentication.
-        """
-        return self._profile_token
-
-    def get_user(self) -> Optional[str]:
-        """ Retrieves the username associated with the profile.
-
-        Returns:
-            str: The username provided in the profile for authentication at the server.
-        """
-        return self._profile_user
-
-    def get_password(self) -> Optional[str]:
-        """ Retrieves the password associated with the profile.
-
-        Returns:
-            str: The password provided in the profile for authentication at the server.
-        """
-        return self._profile_password
-
-    def get_cert_path(self) -> Optional[str]:
-        """ Retrieves the file path to the server certificate.
-
-        Returns:
-            str: The file path of the server certificate used by the profile.
-        """
-        return self._profile_cert
-
-    def get_profiles_folder(self) -> str:
-        """Returns the path to the profiles storage folder."""
-        return self.profiles_storage_path
 
     def _reset(self):
         """ Initializes instance attributes. """
