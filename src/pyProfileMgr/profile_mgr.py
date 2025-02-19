@@ -41,7 +41,7 @@ import os
 from typing import Optional
 from dataclasses import dataclass
 try:
-    from enum import StrEnum  # Available in Python 3.11+
+    from enum import StrEnum  # type: ignore # Available in Python 3.11+
 except ImportError:
     from enum import Enum
 
@@ -71,9 +71,9 @@ PASSWORD_KEY = 'password'
 @dataclass
 class ProfileType(StrEnum):
     """ The profile types."""
-    JIRA = 'jira'
-    POLARION = 'polarion'
-    SUPERSET = 'superset'
+    JIRA = 'jira'  # type: ignore
+    POLARION = 'polarion'  # type: ignore
+    SUPERSET = 'superset'  # type: ignore
 
 
 ################################################################################
