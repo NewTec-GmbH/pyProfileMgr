@@ -35,12 +35,13 @@
 # Imports
 ################################################################################
 
-import os
 import json
 import logging
+import os
+from typing import Optional
 from dataclasses import dataclass
 try:
-    from enum import StrEnum  # Available in Python 3.11+
+    from enum import StrEnum  # type: ignore # Available in Python 3.11+
 except ImportError:
     from enum import Enum
 
@@ -70,20 +71,44 @@ PASSWORD_KEY = 'password'
 @dataclass
 class ProfileType(StrEnum):
     """ The profile types."""
-    JIRA = 'jira'
-    POLARION = 'polarion'
-    SUPERSET = 'superset'
+    JIRA = 'jira'  # type: ignore
+    POLARION = 'polarion'  # type: ignore
+    SUPERSET = 'superset'  # type: ignore
+
+
+################################################################################
+# Functions
+################################################################################
+
+def prepare_profiles_folder() -> str:
+    """ Prepares the profiles storage folder and returns the path to it.
+
+        Profile data is stored under the users home directory.
+
+    Returns:
+        str: The path to the profiles folder.
+    """
+
+    profiles_storage_path = os.path.expanduser(
+        "~") + PATH_TO_PROFILES_FOLDER
+
+    # Create the profiles storage folder if it does not exist.
+    if not os.path.exists(profiles_storage_path):
+        os.makedirs(profiles_storage_path)
+
+    return profiles_storage_path
 
 
 ################################################################################
 # Classes
 ################################################################################
 
-
 class ProfileMgr:
     """ The ProfileMgr class handles all  processes regarding server profiles.
         This includes adding, deleting or configuring profile data.
     """
+
+    profiles_storage_path = prepare_profiles_folder()
 
     # pylint: disable=R0902
     def __init__(self):
@@ -95,18 +120,16 @@ class ProfileMgr:
         self._profile_password = None
         self._profile_cert = None
 
-        self._profiles_storage_path = self._prepare_profiles_folder()
-
     # pylint: disable=R0912, R0913, R0917
 
     def add(self,
             profile_name: str,
             profile_type: ProfileType,
             server_url: str,
-            token: str,
-            user: str,
-            password: str,
-            cert_path: str) -> Ret.CODE:
+            token: Optional[str],
+            user: Optional[str],
+            password: Optional[str],
+            cert_path: Optional[str]) -> Ret.CODE:
         """ Adds a new profile with the provided details.
 
         Args:
@@ -144,7 +167,7 @@ class ProfileMgr:
             else:
                 return Ret.CODE.RET_ERROR_MISSING_CREDENTIALS
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
@@ -171,7 +194,7 @@ class ProfileMgr:
                 LOG.info(msg)
                 print(msg)
         else:
-            LOG.info("Adding profile '%s' has bene canceled.", profile_name)
+            LOG.info("Adding profile '%s' has been canceled.", profile_name)
 
         return ret_status
 
@@ -187,7 +210,7 @@ class ProfileMgr:
         """
         ret_status = Ret.CODE.RET_OK
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
         if not os.path.exists(profile_path):
             return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
@@ -221,13 +244,9 @@ class ProfileMgr:
         Returns:
             Ret.CODE: A status code indicating the result of the operation.
         """
-        ret_status = Ret.CODE.RET_OK
-
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
-        if not os.path.exists(profile_path):
-            return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
-
-        self.load(profile_name)
+        ret_status = self.load(profile_name)
+        if ret_status != Ret.CODE.RET_OK:
+            return ret_status
 
         write_dict = {
             TYPE_KEY: self._profile_type,
@@ -235,12 +254,11 @@ class ProfileMgr:
             TOKEN_KEY: api_token
         }
 
-        os.remove(profile_path + DATA_FILE)
-
-        profile_data = json.dumps(write_dict, indent=4)
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         try:
             with self._open_file(profile_path + DATA_FILE, 'w') as data_file:
+                profile_data = json.dumps(write_dict, indent=4)
                 data_file.write(profile_data)
                 self._profile_token = api_token
 
@@ -249,9 +267,50 @@ class ProfileMgr:
                 print(msg)
 
         except IOError:
-            ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+            ret_status = Ret.CODE.RET_ERROR_FILE_OPEN_FAILED
 
         return ret_status
+
+    def delete(self, profile_name: str) -> None:
+        """ Deletes the profile with the specified name.
+
+        The method will remove the profile folder and all its content.
+
+        Args:
+            profile_name (str): _description_
+        """
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
+
+        if os.path.exists(profile_path):
+            if os.path.exists(profile_path + DATA_FILE):
+                os.remove(profile_path + DATA_FILE)
+
+            if os.path.exists(profile_path + CERT_FILE):
+                os.remove(profile_path + CERT_FILE)
+
+            os.rmdir(profile_path)
+
+            msg = f"Successfully removed profile '{profile_name}'."
+            LOG.info(msg)
+            print(msg)
+
+        else:
+            LOG.error("Folder for profile '%s' does not exist", profile_name)
+
+    def get_profiles(self) -> list[str]:
+        """ Gets a list of all stored profiles.
+
+        Returns:
+            [str]: List of all stored profiles.
+        """
+
+        profile_names = []
+
+        for file_name in os.listdir(self.profiles_storage_path):
+            if os.path.isfile(os.path.join(self.profiles_storage_path, file_name)) is False:
+                profile_names.append(file_name)
+
+        return profile_names
 
     def load(self, profile_name: str) -> Ret.CODE:
         """ Loads the profile with the specified name.
@@ -262,9 +321,11 @@ class ProfileMgr:
         Returns:
             Ret.CODE: Status code indicating the success or failure of the load operation.
         """
+        self._reset()
+
         ret_status = Ret.CODE.RET_OK
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         try:
             with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
@@ -297,48 +358,7 @@ class ProfileMgr:
 
         return ret_status
 
-    def delete(self, profile_name: str) -> None:
-        """ Deletes the profile with the specified name.
-
-        The method will remove the profile folder and all its content.
-
-        Args:
-            profile_name (str): _description_
-        """
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
-
-        if os.path.exists(profile_path):
-            if os.path.exists(profile_path + DATA_FILE):
-                os.remove(profile_path + DATA_FILE)
-
-            if os.path.exists(profile_path + CERT_FILE):
-                os.remove(profile_path + CERT_FILE)
-
-            os.rmdir(profile_path)
-
-            msg = f"Successfully removed profile '{profile_name}'."
-            LOG.info(msg)
-            print(msg)
-
-        else:
-            LOG.error("Folder for profile '%s' does not exist", profile_name)
-
-    def get_profiles(self) -> list[str]:
-        """ Gets a list of all stored profiles.
-
-        Returns:
-            [str]: List of all stored profiles.
-        """
-
-        profile_names = []
-
-        for file_name in os.listdir(self._profiles_storage_path):
-            if os.path.isfile(os.path.join(self._profiles_storage_path, file_name)) is False:
-                profile_names.append(file_name)
-
-        return profile_names
-
-    def get_name(self) -> str:
+    def get_name(self) -> Optional[str]:
         """ Returns the name of the loaded profile.
 
         Returns:
@@ -346,7 +366,7 @@ class ProfileMgr:
         """
         return self._profile_name
 
-    def get_type(self) -> ProfileType:
+    def get_type(self) -> Optional[ProfileType]:
         """ Returns the type of the loaded profile.
 
         Returns:
@@ -354,7 +374,7 @@ class ProfileMgr:
         """
         return self._profile_type
 
-    def get_server_url(self) -> str:
+    def get_server_url(self) -> Optional[str]:
         """ Retrieves the server URL associated with the profile.
 
         Returns:
@@ -362,7 +382,7 @@ class ProfileMgr:
         """
         return self._profile_server_url
 
-    def get_api_token(self) -> str:
+    def get_api_token(self) -> Optional[str]:
         """ Retrieves the API token associated with the profile.
 
         Returns:
@@ -370,7 +390,7 @@ class ProfileMgr:
         """
         return self._profile_token
 
-    def get_user(self) -> str:
+    def get_user(self) -> Optional[str]:
         """ Retrieves the username associated with the profile.
 
         Returns:
@@ -378,7 +398,7 @@ class ProfileMgr:
         """
         return self._profile_user
 
-    def get_password(self) -> str:
+    def get_password(self) -> Optional[str]:
         """ Retrieves the password associated with the profile.
 
         Returns:
@@ -386,7 +406,7 @@ class ProfileMgr:
         """
         return self._profile_password
 
-    def get_cert_path(self) -> str:
+    def get_cert_path(self) -> Optional[str]:
         """ Retrieves the file path to the server certificate.
 
         Returns:
@@ -394,25 +414,21 @@ class ProfileMgr:
         """
         return self._profile_cert
 
-    def _prepare_profiles_folder(self) -> str:
-        """ Prepares the profiles storage folder and returns the path to it.
+    def get_profiles_folder(self) -> str:
+        """Returns the path to the profiles storage folder."""
+        return self.profiles_storage_path
 
-            Profile data is stored under the users home directory.
+    def _reset(self):
+        """ Initializes instance attributes. """
+        self._profile_name = None
+        self._profile_type = None
+        self._profile_server_url = None
+        self._profile_token = None
+        self._profile_user = None
+        self._profile_password = None
+        self._profile_cert = None
 
-        Returns:
-            str: The path to the profiles folder.
-        """
-
-        profiles_storage_path = os.path.expanduser(
-            "~") + PATH_TO_PROFILES_FOLDER
-
-        # Create the profiles storage folder if it does not exist.
-        if not os.path.exists(profiles_storage_path):
-            os.makedirs(profiles_storage_path)
-
-        return profiles_storage_path
-
-    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str) -> Ret.CODE:
+    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: Optional[str]) -> Ret.CODE:
         """ Adds a new server profile to the configuration.
 
         Args:
@@ -426,7 +442,7 @@ class ProfileMgr:
 
         ret_status = Ret.CODE.RET_OK
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
         profile_data = json.dumps(write_dict, indent=4)
 
         try:
@@ -436,13 +452,13 @@ class ProfileMgr:
         except IOError:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
-        if cert_path is not None:
+        if cert_path:
             ret_status = self.add_certificate(profile_name, cert_path)
 
         return ret_status
 
     # pylint: disable=R1732
-    def _open_file(self, file_path: str, mode: str) -> any:
+    def _open_file(self, file_path: str, mode: str):
         """ Opens a file (encoding="UTF-8") in the given mode.
 
         Args:
