@@ -35,21 +35,14 @@
 # Imports
 ################################################################################
 
+import copy
 import json
 import logging
 import os
 from typing import Optional
-from dataclasses import dataclass
-try:
-    from enum import StrEnum  # type: ignore # Available in Python 3.11+
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        ''' Custom StrEnum class for Python versions < 3.11 '''
 
 from pyProfileMgr.ret import Ret, Warnings
-
+from pyProfileMgr.profile_data import ProfileData, ProfileType
 
 ################################################################################
 # Variables
@@ -95,14 +88,6 @@ def prepare_profiles_folder() -> str:
 # Classes
 ################################################################################
 
-@dataclass
-class ProfileType(StrEnum):
-    """ The profile types."""
-    JIRA = 'jira'  # type: ignore
-    POLARION = 'polarion'  # type: ignore
-    SUPERSET = 'superset'  # type: ignore
-
-
 class ProfileMgr:
     """ The ProfileMgr class handles all  processes regarding server profiles.
         This includes adding, deleting or configuring profile data.
@@ -110,84 +95,23 @@ class ProfileMgr:
 
     profiles_storage_path = prepare_profiles_folder()
 
-    # pylint: disable=R0902
     def __init__(self):
-        self._profile_name = None
-        self._profile_type = None
-        self._profile_server_url = None
-        self._profile_token = None
-        self._profile_user = None
-        self._profile_password = None
-        self._profile_cert = None
+        self._loaded_profile_data = None
 
     # pylint: disable=R0912, R0913, R0917
 
     @property
-    def profile_name(self) -> Optional[str]:
-        """ Returns the name of the loaded profile.
+    def loaded_profile(self) -> Optional[ProfileData]:
+        """ Gets a copy of the loaded profile data.
 
         Returns:
-            str: The name of the profile.
+            ProfileData: The data of the loaded profile.
         """
-        return self._profile_name
-
-    @property
-    def profile_type(self) -> Optional[ProfileType]:
-        """ Returns the type of the loaded profile.
-
-        Returns:
-            str: The profile type.
-        """
-        return self._profile_type
-
-    @property
-    def server_url(self) -> Optional[str]:
-        """ Retrieves the server URL associated with the profile.
-
-        Returns:
-            str: The server URL used by the profile.
-        """
-        return self._profile_server_url
-
-    @property
-    def api_token(self) -> Optional[str]:
-        """ Retrieves the API token associated with the profile.
-
-        Returns:
-            str: The API token used by the profile for authentication.
-        """
-        return self._profile_token
-
-    @property
-    def username(self) -> Optional[str]:
-        """ Retrieves the username associated with the profile.
-
-        Returns:
-            str: The username provided in the profile for authentication at the server.
-        """
-        return self._profile_user
-
-    @property
-    def password(self) -> Optional[str]:
-        """ Retrieves the password associated with the profile.
-
-        Returns:
-            str: The password provided in the profile for authentication at the server.
-        """
-        return self._profile_password
-
-    @property
-    def cert_path(self) -> Optional[str]:
-        """ Retrieves the file path to the server certificate.
-
-        Returns:
-            str: The file path of the server certificate used by the profile.
-        """
-        return self._profile_cert
+        return copy.copy(self._loaded_profile_data)
 
     @property
     def profiles_folder(self) -> str:
-        """Returns the path to the profiles storage folder."""
+        """ Gets the path to the profiles storage folder. """
         return self.profiles_storage_path
 
     def add(self,
@@ -199,6 +123,8 @@ class ProfileMgr:
             password: Optional[str],
             cert_path: Optional[str]) -> Ret.CODE:
         """ Adds a new profile with the provided details.
+
+        NOTE: This function automatically loads the profile ('profile_name') on success.
 
         Args:
             profile_name (str): The unique name of the profile.
@@ -261,8 +187,15 @@ class ProfileMgr:
                 msg = f"Successfully created profile '{profile_name}'."
                 LOG.info(msg)
                 print(msg)
+
         else:
             LOG.info("Adding profile '%s' has been canceled.", profile_name)
+
+        if ret_status == Ret.CODE.RET_OK:
+            ret_status = self.load(profile_name)
+            if ret_status != Ret.CODE.RET_OK:
+                LOG.warning(
+                    "Failed to load profile '%s' after adding it: %s", profile_name, Ret.MSG[ret_status])
 
         return ret_status
 
@@ -288,6 +221,8 @@ class ProfileMgr:
 
                 with self._open_file(profile_path + CERT_FILE, 'w') as cert_file_profile:
                     cert_file_profile.write(cert_data)
+                    if self._loaded_profile_data and self._loaded_profile_data.profile_name == profile_name:
+                        self._loaded_profile_data.cert_path = cert_file_profile.name
 
                     msg = f"Successfully added certificate to profile '{profile_name}'."
                     LOG.info(msg)
@@ -301,7 +236,7 @@ class ProfileMgr:
     def add_token(self, profile_name: str, api_token: str) -> Ret.CODE:
         """ Adds an API token to the specified profile.
 
-        NOTE: This function requires that the given profile ('profile_name') has been loaded before.
+        NOTE: This function automatically loads the given profile ('profile_name').
 
         NOTE: This function is only used for profiles that require an API token for authentication.
 
@@ -317,8 +252,8 @@ class ProfileMgr:
             return ret_status
 
         write_dict = {
-            TYPE_KEY: self._profile_type,
-            SERVER_URL_KEY: self._profile_server_url,
+            TYPE_KEY: self._loaded_profile_data.profile_type if self._loaded_profile_data else None,
+            SERVER_URL_KEY: self._loaded_profile_data.server_url if self._loaded_profile_data else None,
             TOKEN_KEY: api_token
         }
 
@@ -328,7 +263,8 @@ class ProfileMgr:
             with self._open_file(profile_path + DATA_FILE, 'w') as data_file:
                 profile_data = json.dumps(write_dict, indent=4)
                 data_file.write(profile_data)
-                self._profile_token = api_token
+                if self._loaded_profile_data and self._loaded_profile_data.profile_name == profile_name:
+                    self._loaded_profile_data.token = api_token
 
                 msg = f"Successfully added an API token to profile '{profile_name}'."
                 LOG.info(msg)
@@ -357,6 +293,9 @@ class ProfileMgr:
                 os.remove(profile_path + CERT_FILE)
 
             os.rmdir(profile_path)
+
+            if self._loaded_profile_data and self._loaded_profile_data.profile_name == profile_name:
+                self._reset()
 
             msg = f"Successfully removed profile '{profile_name}'."
             LOG.info(msg)
@@ -399,27 +338,31 @@ class ProfileMgr:
             with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
                 profile_dict = json.load(data_file)
 
+                profile_type = None
                 try:
                     # TRICKY: Do not use 'contains' since that has several issues
                     # with StrEnum, which differ in multiple Python versions.
                     # pylint: disable=E1121
-                    self._profile_type = ProfileType(profile_dict[TYPE_KEY])
+                    profile_type = ProfileType(profile_dict[TYPE_KEY])
                 except ValueError:
                     return Ret.CODE.RET_ERROR_INVALID_PROFILE_TYPE
 
-                self._profile_name = profile_name
-                self._profile_type = profile_dict[TYPE_KEY]
-                self._profile_server_url = profile_dict[SERVER_URL_KEY]
-
+                token = None
                 if TOKEN_KEY in profile_dict:
-                    self._profile_token = profile_dict[TOKEN_KEY]
+                    token = profile_dict[TOKEN_KEY]
 
+                username = None
+                password = None
                 if USER_KEY in profile_dict and PASSWORD_KEY in profile_dict:
-                    self._profile_user = profile_dict[USER_KEY]
-                    self._profile_password = profile_dict[PASSWORD_KEY]
+                    username = profile_dict[USER_KEY]
+                    password = profile_dict[PASSWORD_KEY]
 
+                cert_path = None
                 if os.path.exists(profile_path + CERT_FILE):
-                    self._profile_cert = profile_path + CERT_FILE
+                    cert_path = profile_path + CERT_FILE
+
+                self._loaded_profile_data = ProfileData(
+                    profile_name, profile_type, profile_dict[SERVER_URL_KEY], token, username, password, cert_path)
 
         except IOError:
             ret_status = Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
@@ -428,13 +371,7 @@ class ProfileMgr:
 
     def _reset(self):
         """ Initializes instance attributes. """
-        self._profile_name = None
-        self._profile_type = None
-        self._profile_server_url = None
-        self._profile_token = None
-        self._profile_user = None
-        self._profile_password = None
-        self._profile_cert = None
+        self._loaded_profile_data = None
 
     def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: Optional[str]) -> Ret.CODE:
         """ Adds a new server profile to the configuration.

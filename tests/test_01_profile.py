@@ -39,7 +39,8 @@ import stat
 
 import pytest
 
-from pyProfileMgr.profile_mgr import ProfileMgr, ProfileType, DATA_FILE
+from pyProfileMgr.profile_data import ProfileType
+from pyProfileMgr.profile_mgr import ProfileMgr, DATA_FILE
 from pyProfileMgr.ret import Ret
 
 
@@ -92,21 +93,18 @@ def test_add_profile(profile_mgr: ProfileMgr, monkeypatch):
     # TC: All OK - add a new profile and check if it was created successfully.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     # TC: All OK - overwrite existing profile.
     monkeypatch.setattr('builtins.input', lambda _: "y")
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.profile_type == ProfileType.POLARION
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
 
     # TC: All OK - do not overwrite existing profile (type remains 'polarion').
     monkeypatch.setattr('builtins.input', lambda _: "n")
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.profile_type == ProfileType.POLARION
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
 
 
 def test_add_certificate(profile_mgr: ProfileMgr):
@@ -118,10 +116,9 @@ def test_add_certificate(profile_mgr: ProfileMgr):
 
     # TC: Fail to add a non-existing certificate file to the profile.
 
-    # Add a new profile (without certificate) and check if it was created successfully.
+    # Add a new profile (without certificate).
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
                                        + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
@@ -129,8 +126,7 @@ def test_add_certificate(profile_mgr: ProfileMgr):
     # TC: All OK - add an existing certificate to the profile and check if it was added successfully.
     assert profile_mgr.add_certificate(
         TEST_PROFILE_NAME, TEST_CERT_PATH) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.cert_path is not None
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.cert_path is not None
 
 
 NO_USER_WRITING = ~stat.S_IWUSR
@@ -146,17 +142,15 @@ def test_add_token(profile_mgr: ProfileMgr):
     assert profile_mgr.add_token(
         TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
-    # Add a new profile (without token) and check if it was created successfully.
+    # Add a new profile (without token).
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     # TC: All OK - Add a token to the profile and check if it was added successfully.
 
     assert profile_mgr.add_token(
         TEST_PROFILE_NAME, TEST_TOKEN) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
-    assert profile_mgr.api_token == TEST_TOKEN
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.token == TEST_TOKEN
 
     # TC: Fail to add token if data file is read-only.
     data_file_path = profile_mgr.profiles_folder + TEST_PROFILE_NAME + \
@@ -172,11 +166,9 @@ def test_add_token(profile_mgr: ProfileMgr):
 def test_delete_profile(profile_mgr: ProfileMgr):
     """Tests the deletion of a new profile."""
 
-    # Add a new profile and check if it was created successfully.
+    # Add a new profile.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
-
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     # TC: Delete a profile and check that it was deleted successfully.
     try:
@@ -186,40 +178,43 @@ def test_delete_profile(profile_mgr: ProfileMgr):
         pytest.fail(f"Unexpected exception: {exc}")
 
 
-def test_getters(profile_mgr: ProfileMgr):
+def test_loaded_profile_attributes(profile_mgr: ProfileMgr):
     """Tests the getters of the profile manager."""
 
     # TC: get_profiles
 
-    # Add a new profile including certificate and check if it was created successfully.
+    # Add a new profile including certificate.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     profiles = profile_mgr.get_profiles()
     assert TEST_PROFILE_NAME in profiles
 
     # TC: get_name
-    assert profile_mgr.profile_name == TEST_PROFILE_NAME
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.profile_name == TEST_PROFILE_NAME
 
     # TC: get_type
-    assert profile_mgr.profile_type == ProfileType.POLARION
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
 
     # TC: get_server_url
-    assert profile_mgr.server_url == TEST_SERVER
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.server_url == TEST_SERVER
 
     # TC: get_api_token
-    assert profile_mgr.api_token == TEST_TOKEN
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.token == TEST_TOKEN
 
     # TC: get_user (expected to be None since the profile contains a token).
-    assert profile_mgr.username is None
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.user is None
 
     # TC: get_password (expected to be None since the profile contains a token).
-    assert profile_mgr.password is None
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.password is None
 
     # TC: get_cert_path
-    cert_path = profile_mgr.cert_path
-    assert cert_path and ".cert" in cert_path
+    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.cert_path and \
+        ".cert" in profile_mgr.loaded_profile.cert_path
+
+    # TC: Check that modification of the data is not possible.
+    profile_mgr.loaded_profile.profile_name = "bogus"
+    assert profile_mgr.loaded_profile.profile_name == TEST_PROFILE_NAME
 
 
 def test_invalid_type(profile_mgr: ProfileMgr):
@@ -229,7 +224,6 @@ def test_invalid_type(profile_mgr: ProfileMgr):
 
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
-    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
 
     data_file_path = profile_mgr.profiles_folder + TEST_PROFILE_NAME + \
         "/" + DATA_FILE
