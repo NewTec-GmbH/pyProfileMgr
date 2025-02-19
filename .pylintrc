@@ -1,6 +1,6 @@
 # This Pylint rcfile contains a best-effort configuration to uphold the
 # best-practices and style described in the Google Python style guide.
-# some sections that should not be used, and some where the defautl value is ok, have been removed
+# some sections that should not be used, and some where the default value is ok, have been removed
 # For detailed documentation of all options see: https://pylint.pycqa.org/en/latest/user_guide/configuration/all-options.html
 #
 # The original file can be found here:
