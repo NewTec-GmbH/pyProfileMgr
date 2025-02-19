@@ -380,6 +380,8 @@ def _update_profile(args) -> Ret.CODE:
     Returns:
         Ret.CODE: Status code indicating the success or failure of the profile update.
     """
+    ret_status = Ret.CODE.RET_OK
+
     # Update cert
     if args.cert is not None:
         profile_mgr = ProfileMgr()

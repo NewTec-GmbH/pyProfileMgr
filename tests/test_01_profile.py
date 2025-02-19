@@ -218,7 +218,8 @@ def test_getters(profile_mgr: ProfileMgr):
     assert profile_mgr.get_password() is None
 
     # TC: get_cert_path
-    assert ".cert" in profile_mgr.get_cert_path()
+    cert_path = profile_mgr.get_cert_path()
+    assert cert_path and ".cert" in cert_path
 
 
 def test_invalid_type(profile_mgr: ProfileMgr):

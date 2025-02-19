@@ -76,14 +76,38 @@ class ProfileType(StrEnum):
 
 
 ################################################################################
-# Classes
+# Functions
 ################################################################################
 
+def prepare_profiles_folder() -> str:
+    """ Prepares the profiles storage folder and returns the path to it.
+
+        Profile data is stored under the users home directory.
+
+    Returns:
+        str: The path to the profiles folder.
+    """
+
+    profiles_storage_path = os.path.expanduser(
+        "~") + PATH_TO_PROFILES_FOLDER
+
+    # Create the profiles storage folder if it does not exist.
+    if not os.path.exists(profiles_storage_path):
+        os.makedirs(profiles_storage_path)
+
+    return profiles_storage_path
+
+
+################################################################################
+# Classes
+################################################################################
 
 class ProfileMgr:
     """ The ProfileMgr class handles all  processes regarding server profiles.
         This includes adding, deleting or configuring profile data.
     """
+
+    profiles_storage_path = prepare_profiles_folder()
 
     # pylint: disable=R0902
     def __init__(self):
@@ -94,9 +118,6 @@ class ProfileMgr:
         self._profile_user = None
         self._profile_password = None
         self._profile_cert = None
-        self._profiles_storage_path = None
-
-        self._reset()
 
     # pylint: disable=R0912, R0913, R0917
 
@@ -104,10 +125,10 @@ class ProfileMgr:
             profile_name: str,
             profile_type: ProfileType,
             server_url: str,
-            token: str,
-            user: str,
-            password: str,
-            cert_path: str) -> Ret.CODE:
+            token: str | None,
+            user: str | None,
+            password: str | None,
+            cert_path: str | None) -> Ret.CODE:
         """ Adds a new profile with the provided details.
 
         Args:
@@ -145,7 +166,7 @@ class ProfileMgr:
             else:
                 return Ret.CODE.RET_ERROR_MISSING_CREDENTIALS
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         if not os.path.exists(profile_path):
             os.mkdir(profile_path)
@@ -188,7 +209,7 @@ class ProfileMgr:
         """
         ret_status = Ret.CODE.RET_OK
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
         if not os.path.exists(profile_path):
             return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
 
@@ -232,7 +253,7 @@ class ProfileMgr:
             TOKEN_KEY: api_token
         }
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         try:
             with self._open_file(profile_path + DATA_FILE, 'w') as data_file:
@@ -257,7 +278,7 @@ class ProfileMgr:
         Args:
             profile_name (str): _description_
         """
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         if os.path.exists(profile_path):
             if os.path.exists(profile_path + DATA_FILE):
@@ -284,8 +305,8 @@ class ProfileMgr:
 
         profile_names = []
 
-        for file_name in os.listdir(self._profiles_storage_path):
-            if os.path.isfile(os.path.join(self._profiles_storage_path, file_name)) is False:
+        for file_name in os.listdir(self.profiles_storage_path):
+            if os.path.isfile(os.path.join(self.profiles_storage_path, file_name)) is False:
                 profile_names.append(file_name)
 
         return profile_names
@@ -303,7 +324,7 @@ class ProfileMgr:
 
         ret_status = Ret.CODE.RET_OK
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
 
         try:
             with self._open_file(profile_path + DATA_FILE, 'r') as data_file:
@@ -336,7 +357,7 @@ class ProfileMgr:
 
         return ret_status
 
-    def get_name(self) -> str:
+    def get_name(self) -> str | None:
         """ Returns the name of the loaded profile.
 
         Returns:
@@ -344,7 +365,7 @@ class ProfileMgr:
         """
         return self._profile_name
 
-    def get_type(self) -> ProfileType:
+    def get_type(self) -> ProfileType | None:
         """ Returns the type of the loaded profile.
 
         Returns:
@@ -352,7 +373,7 @@ class ProfileMgr:
         """
         return self._profile_type
 
-    def get_server_url(self) -> str:
+    def get_server_url(self) -> str | None:
         """ Retrieves the server URL associated with the profile.
 
         Returns:
@@ -360,7 +381,7 @@ class ProfileMgr:
         """
         return self._profile_server_url
 
-    def get_api_token(self) -> str:
+    def get_api_token(self) -> str | None:
         """ Retrieves the API token associated with the profile.
 
         Returns:
@@ -368,7 +389,7 @@ class ProfileMgr:
         """
         return self._profile_token
 
-    def get_user(self) -> str:
+    def get_user(self) -> str | None:
         """ Retrieves the username associated with the profile.
 
         Returns:
@@ -376,7 +397,7 @@ class ProfileMgr:
         """
         return self._profile_user
 
-    def get_password(self) -> str:
+    def get_password(self) -> str | None:
         """ Retrieves the password associated with the profile.
 
         Returns:
@@ -384,7 +405,7 @@ class ProfileMgr:
         """
         return self._profile_password
 
-    def get_cert_path(self) -> str:
+    def get_cert_path(self) -> str | None:
         """ Retrieves the file path to the server certificate.
 
         Returns:
@@ -392,30 +413,12 @@ class ProfileMgr:
         """
         return self._profile_cert
 
-    def _prepare_profiles_folder(self) -> str:
-        """ Prepares the profiles storage folder and returns the path to it.
-
-            Profile data is stored under the users home directory.
-
-        Returns:
-            str: The path to the profiles folder.
-        """
-
-        profiles_storage_path = os.path.expanduser(
-            "~") + PATH_TO_PROFILES_FOLDER
-
-        # Create the profiles storage folder if it does not exist.
-        if not os.path.exists(profiles_storage_path):
-            os.makedirs(profiles_storage_path)
-
-        return profiles_storage_path
-
     def get_profiles_folder(self) -> str:
         """Returns the path to the profiles storage folder."""
-        return self._profiles_storage_path
+        return self.profiles_storage_path
 
     def _reset(self):
-        """ Initializes class members. """
+        """ Initializes instance attributes. """
         self._profile_name = None
         self._profile_type = None
         self._profile_server_url = None
@@ -424,9 +427,7 @@ class ProfileMgr:
         self._profile_password = None
         self._profile_cert = None
 
-        self._profiles_storage_path = self._prepare_profiles_folder()
-
-    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str) -> Ret.CODE:
+    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str | None) -> Ret.CODE:
         """ Adds a new server profile to the configuration.
 
         Args:
@@ -440,7 +441,7 @@ class ProfileMgr:
 
         ret_status = Ret.CODE.RET_OK
 
-        profile_path = self._profiles_storage_path + f"{profile_name}/"
+        profile_path = self.profiles_storage_path + f"{profile_name}/"
         profile_data = json.dumps(write_dict, indent=4)
 
         try:
@@ -450,13 +451,13 @@ class ProfileMgr:
         except IOError:
             ret_status = Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
-        if cert_path is not None:
+        if cert_path:
             ret_status = self.add_certificate(profile_name, cert_path)
 
         return ret_status
 
     # pylint: disable=R1732
-    def _open_file(self, file_path: str, mode: str) -> any:
+    def _open_file(self, file_path: str, mode: str):
         """ Opens a file (encoding="UTF-8") in the given mode.
 
         Args:
