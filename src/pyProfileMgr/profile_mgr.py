@@ -35,9 +35,10 @@
 # Imports
 ################################################################################
 
-import os
 import json
 import logging
+import os
+from typing import Optional
 from dataclasses import dataclass
 try:
     from enum import StrEnum  # Available in Python 3.11+
@@ -125,10 +126,10 @@ class ProfileMgr:
             profile_name: str,
             profile_type: ProfileType,
             server_url: str,
-            token: str | None,
-            user: str | None,
-            password: str | None,
-            cert_path: str | None) -> Ret.CODE:
+            token: Optional[str],
+            user: Optional[str],
+            password: Optional[str],
+            cert_path: Optional[str]) -> Ret.CODE:
         """ Adds a new profile with the provided details.
 
         Args:
@@ -357,7 +358,7 @@ class ProfileMgr:
 
         return ret_status
 
-    def get_name(self) -> str | None:
+    def get_name(self) -> Optional[str]:
         """ Returns the name of the loaded profile.
 
         Returns:
@@ -365,7 +366,7 @@ class ProfileMgr:
         """
         return self._profile_name
 
-    def get_type(self) -> ProfileType | None:
+    def get_type(self) -> Optional[ProfileType]:
         """ Returns the type of the loaded profile.
 
         Returns:
@@ -373,7 +374,7 @@ class ProfileMgr:
         """
         return self._profile_type
 
-    def get_server_url(self) -> str | None:
+    def get_server_url(self) -> Optional[str]:
         """ Retrieves the server URL associated with the profile.
 
         Returns:
@@ -381,7 +382,7 @@ class ProfileMgr:
         """
         return self._profile_server_url
 
-    def get_api_token(self) -> str | None:
+    def get_api_token(self) -> Optional[str]:
         """ Retrieves the API token associated with the profile.
 
         Returns:
@@ -389,7 +390,7 @@ class ProfileMgr:
         """
         return self._profile_token
 
-    def get_user(self) -> str | None:
+    def get_user(self) -> Optional[str]:
         """ Retrieves the username associated with the profile.
 
         Returns:
@@ -397,7 +398,7 @@ class ProfileMgr:
         """
         return self._profile_user
 
-    def get_password(self) -> str | None:
+    def get_password(self) -> Optional[str]:
         """ Retrieves the password associated with the profile.
 
         Returns:
@@ -405,7 +406,7 @@ class ProfileMgr:
         """
         return self._profile_password
 
-    def get_cert_path(self) -> str | None:
+    def get_cert_path(self) -> Optional[str]:
         """ Retrieves the file path to the server certificate.
 
         Returns:
@@ -427,7 +428,7 @@ class ProfileMgr:
         self._profile_password = None
         self._profile_cert = None
 
-    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: str | None) -> Ret.CODE:
+    def _add_new_profile(self, write_dict: dict, profile_name: str, cert_path: Optional[str]) -> Ret.CODE:
         """ Adds a new server profile to the configuration.
 
         Args:
