@@ -173,7 +173,7 @@ def register(subparser) -> argparse.ArgumentParser:
         type=str,
         required=False,
         metavar="<profile type>",
-        help="The type of the profile ('jira', 'polarion' or 'superset')."
+        help="The type of the profile ('jira', 'polarion', 'superset', 'conaktiv' or 'stages')."
     )
 
     sub_parser_update.add_argument(
