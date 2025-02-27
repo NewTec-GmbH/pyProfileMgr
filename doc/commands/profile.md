@@ -5,7 +5,7 @@ Add, delete, update or list profiles.
 A profile contains the following data:
 
 * name: A unique name by which the profile can be referenced. The name is not stored in the data files, but identifies the folder. (required)
-* type: The type of the profile. Allowed values are 'jira', 'polarion' and 'superset', currently. (required)
+* type: The type of the profile. Allowed values are 'jira', 'polarion', 'superset', 'conaktiv' and 'stages', currently. (required)
 * server: The URL to the server. (required)
 * token: An API token to allow for easier access. (optional)
 * user/password: The credentials to authenticate with the server in case no token is given. (optional)
@@ -29,7 +29,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -pt <profile type>, --profile_type <profile type>
-                        The type of the profile ('jira', 'polarion' or 'superset').
+                        The type of the profile ('jira', 'polarion', 'superset', 'conaktiv' or 'stages').
   -s <server URL>, --server <server URL>
                         The server URL to connect to.
   -t <token>, --token <token>
