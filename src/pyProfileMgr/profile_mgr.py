@@ -41,8 +41,8 @@ import logging
 import os
 from typing import Optional
 
-from pyProfileMgr.ret import Ret, Warnings
 from pyProfileMgr.profile_data import ProfileData, ProfileType
+from pyProfileMgr.ret import Ret
 
 ################################################################################
 # Variables
@@ -152,9 +152,6 @@ class ProfileMgr:
             write_dict[TOKEN_KEY] = token
         # Else require user/password for authentication.
         else:
-            LOG.warning(
-                "%s", Warnings.MSG[Warnings.CODE.WARNING_TOKEN_RECOMMENDED])
-
             if user is not None and password is not None:
                 write_dict[USER_KEY] = user
                 write_dict[PASSWORD_KEY] = password

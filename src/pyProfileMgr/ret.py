@@ -32,8 +32,8 @@
 # Imports
 ################################################################################
 
-from enum import IntEnum
 from dataclasses import dataclass
+from enum import IntEnum
 
 ################################################################################
 # Variables
@@ -78,21 +78,6 @@ class Ret():
         CODE.RET_ERROR_PROFILE_NOT_FOUND:           "The profile does not exist.",
         CODE.RET_ERROR_PROFILE_ALREADY_EXISTS:      "The profile you want to add already exists.\n" +
                                                     "Use the 'update' command to update it.",
-    }
-
-
-@dataclass
-class Warnings():
-    """ The warnings of pyProfileMgr. """
-
-    class CODE(IntEnum):
-        """ The error codes and messages of pyProfileMgr. """
-        WARNING_TOKEN_RECOMMENDED = 0
-
-    MSG = {
-        CODE.WARNING_TOKEN_RECOMMENDED:      "No api token was found in this server profile.\n" +
-                                             "It is recommended to add a token to your server " +
-                                             "profile.",
     }
 
 
