@@ -41,9 +41,7 @@ import argparse
 import logging
 
 from pyProfileMgr.profile_mgr import ProfileMgr
-
 from pyProfileMgr.ret import Ret
-
 
 ################################################################################
 # Variables
@@ -322,7 +320,7 @@ def _add_profile(args) -> Ret.CODE:
     elif args.token is None and (args.user is None or args.password is None):
         ret_status = Ret.CODE.RET_ERROR_MISSING_USER_INFORMATION
         LOG.error("%s", Ret.MSG[ret_status])
-        print("Profiles can only be created using login credentials." +
+        print("Profiles can only be created using login credentials. " +
               "Please provide a token using the --token option or --user/--password.")
     else:
         profile_name = args.profile_name
