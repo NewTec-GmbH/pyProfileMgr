@@ -36,6 +36,7 @@
 ################################################################################
 
 from dataclasses import dataclass
+
 try:
     from enum import StrEnum  # type: ignore # Available in Python 3.11+
 except ImportError:
@@ -65,6 +66,8 @@ class ProfileType(StrEnum):
     JIRA = 'jira'  # type: ignore
     POLARION = 'polarion'  # type: ignore
     SUPERSET = 'superset'  # type: ignore
+    CONAKTIV = 'conaktiv'  # type: ignore
+    STAGES = 'stages'  # type: ignore
 
 
 @dataclass
