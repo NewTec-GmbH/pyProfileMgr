@@ -128,7 +128,7 @@ class ProfileMgr:
 
         Args:
             profile_name (str): The unique name of the profile.
-            profile_type (str): The type of the profile (e.g. JIRA, POLARION, SUPERSET).
+            profile_type (str): The type of the profile (e.g. JIRA).
             server_url (str): The server URL associated with the profile.
             token (str): The login token for authentication at the server (preferred).
             user (str): The user for authentication at the server.
