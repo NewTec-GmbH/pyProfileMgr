@@ -40,7 +40,9 @@
 import argparse
 import logging
 
+from typing import cast
 from pyProfileMgr.profile_mgr import ProfileMgr
+from pyProfileMgr.profile_data import ProfileData
 from pyProfileMgr.ret import Ret
 
 ################################################################################
@@ -60,7 +62,7 @@ LOG: logging.Logger = logging.getLogger(__name__)
 
 
 def register(subparser) -> argparse.ArgumentParser:
-    """ Register subparser commands for the print module.
+    """ Register subparser commands for the profile module.
 
     Args:
         subparser (obj):   The command subparser object provided via __main__.py.
@@ -71,14 +73,14 @@ def register(subparser) -> argparse.ArgumentParser:
 
     parser = subparser.add_parser(
         'profile',
-        help="Add, update or delete server profiles."
+        help="Add, list, remove, update, and show server profiles."
     )
 
     sub_parsers = parser.add_subparsers(required=True)
 
     # Add
     sub_parser_add = sub_parsers.add_parser("add")
-    sub_parser_add.set_defaults(func=_profile_add)
+    sub_parser_add.set_defaults(func=_add_profile)
 
     sub_parser_add.add_argument(
         'profile_name',
@@ -142,11 +144,11 @@ def register(subparser) -> argparse.ArgumentParser:
 
     # List
     sub_parser_list = sub_parsers.add_parser("list")
-    sub_parser_list.set_defaults(func=_profile_list)
+    sub_parser_list.set_defaults(func=_list_profiles)
 
     # Remove
     sub_parser_remove = sub_parsers.add_parser("remove")
-    sub_parser_remove.set_defaults(func=_profile_remove)
+    sub_parser_remove.set_defaults(func=_remove_profile)
 
     sub_parser_remove.add_argument(
         'profile_name',
@@ -156,60 +158,14 @@ def register(subparser) -> argparse.ArgumentParser:
     )
 
     # Update
-    # KLUDGE: The update command is not yet implemented for anything but the certificate.
     sub_parser_update = sub_parsers.add_parser("update")
-    sub_parser_update.set_defaults(func=_profile_update)
+    sub_parser_update.set_defaults(func=_update_profile)
 
     sub_parser_update.add_argument(
         'profile_name',
         type=str,
         metavar="<profile name>",
         help="The name of the profile."
-    )
-
-    sub_parser_update.add_argument(
-        '-pt',
-        '--profile_type',
-        type=str,
-        required=False,
-        metavar="<profile type>",
-        help="The type of the profile ('jira', 'polarion', 'superset', 'conaktiv' or 'stages')."
-    )
-
-    sub_parser_update.add_argument(
-        '-s',
-        '--server',
-        type=str,
-        required=False,
-        metavar='<server URL>',
-        help="The server URL to connect to."
-    )
-
-    sub_parser_update.add_argument(
-        '-t',
-        '--token',
-        type=str,
-        required=False,
-        metavar='<token>',
-        help="The token to authenticate with the server."
-    )
-
-    sub_parser_update.add_argument(
-        '-u',
-        '--user',
-        type=str,
-        required=False,
-        metavar='<user>',
-        help="The user to authenticate at the server."
-    )
-
-    sub_parser_update.add_argument(
-        '-p',
-        '--password',
-        type=str,
-        required=False,
-        metavar='<password>',
-        help="The password to authenticate at the server."
     )
 
     sub_parser_update.add_argument(
@@ -221,156 +177,89 @@ def register(subparser) -> argparse.ArgumentParser:
         help="The server SSL certificate."
     )
 
+    # Show
+    sub_parser_show = sub_parsers.add_parser("show")
+    sub_parser_show.set_defaults(func=_show_profile)
+
+    sub_parser_show.add_argument(
+        'profile_name',
+        type=str,
+        metavar="<profile name>",
+        help="The name of the profile."
+    )
+
     return parser
 
 
 def execute(_) -> Ret.CODE:
-    """ This function serves as entry point for the command 'profile'.
-        It will be stored as callback for this modules subparser command.
-
-    Args:
-        args (obj): The command line arguments.
+    """ Required module-level interface used by __main__.py.
+        Never called in practice because the 'profile' subparsers are required=True,
+        so argparse always dispatches to a subcommand before reaching this default.
 
     Returns:
         Ret.CODE:   Returns Ret.RET_OK if successful or else the corresponding error code.
     """
-    ret_status = Ret.CODE.RET_OK
-
-    # Nothing to do.
-
-    return ret_status
-
-
-def _profile_add(args) -> Ret.CODE:
-    """ Store a new profile.
-
-    Args:
-        args (obj): The command line arguments.
-
-    Returns:
-        Ret.CODE: The return status of the module.
-    """
-    ret_status = Ret.CODE.RET_OK
-
-    # Do not overwrite existing profiles.
-    profile_mgr = ProfileMgr()
-    profile_list = profile_mgr.get_profiles()
-    if args.profile_name in profile_list:
-        return Ret.CODE.RET_ERROR_PROFILE_ALREADY_EXISTS
-
-    ret_status = _add_profile(args)
-
-    return ret_status
-
-
-def _profile_list(_) -> Ret.CODE:
-    """ List all stored profiles.
-
-    Args:
-        args (obj): The command line arguments.
-
-    Returns:
-        Ret.CODE: The return status of the module.
-    """
-    ret_status = _list_profiles()
-
-    return ret_status
-
-
-def _profile_remove(args) -> Ret.CODE:
-    """ Remove a dedicated profile from filesystem.
-
-    Args:
-        args (obj): The command line arguments.
-
-    Returns:
-        Ret.CODE: The return status of the module.
-    """
-
-    return _remove_profile(args.profile_name)
-
-
-def _profile_update(args) -> Ret.CODE:
-    """ Updates an existing profile.
-
-    Args:
-        args (obj): The command line arguments.
-
-    Returns:
-        Ret.CODE: The return status of the module.
-    """
-    return _update_profile(args)
+    return Ret.CODE.RET_OK
 
 
 def _add_profile(args) -> Ret.CODE:
-    """ Adds a new profile to the configuration using provided arguments.
+    """ Adds a new profile.
 
     Args:
-        args (obj): Object containing the command line arguments for profile addition.
+        args (obj): The command line arguments.
 
     Returns:
-        Ret.CODE: Status code indicating the success or failure of the profile addition.
+        Ret.CODE: The return status of the operation.
     """
-    ret_status = Ret.CODE.RET_OK
     profile_mgr = ProfileMgr()
 
-    if args.server is None:
-        ret_status = Ret.CODE.RET_ERROR_MISSING_SERVER_URL
-        LOG.error("%s", Ret.MSG[ret_status])
-    elif args.token is None and (args.user is None or args.password is None):
+    if args.profile_name in profile_mgr.get_profiles():
+        return Ret.CODE.RET_ERROR_PROFILE_ALREADY_EXISTS
+
+    if args.token is None and (args.user is None or args.password is None):
         ret_status = Ret.CODE.RET_ERROR_MISSING_USER_INFORMATION
         LOG.error("%s", Ret.MSG[ret_status])
         print("Profiles can only be created using login credentials. " +
               "Please provide a token using the --token option or --user/--password.")
-    else:
-        profile_name = args.profile_name
-        profile_type = args.profile_type
-        server = args.server
-        token = args.token
-        user = args.user
-        password = args.password
-        certificate = args.cert
-        ret_status = profile_mgr.add(
-            profile_name, profile_type, server, token, user, password, certificate)
+        return ret_status
 
-    return ret_status
+    return profile_mgr.add(
+        args.profile_name, args.profile_type, args.server,
+        args.token, args.user, args.password, args.cert)
 
 
-def _list_profiles() -> Ret.CODE:
-    """ List all stored profiles.
+def _remove_profile(args) -> Ret.CODE:
+    """ Removes an existing profile.
+
+    Args:
+        args (obj): The command line arguments.
+
+    Returns:
+        Ret.CODE: The return status of the operation.
+    """
+    return ProfileMgr().delete(args.profile_name)
+
+
+def _list_profiles(_) -> Ret.CODE:
+    """ Lists all stored profiles.
+
+    Args:
+        _ (obj): Unused command line arguments (required by argparse dispatch).
 
     Returns:
         Ret.CODE: Status code indicating the success or failure of the command.
     """
-    ret_status = Ret.CODE.RET_OK
-
     profile_list = ProfileMgr().get_profiles()
 
     print("Profiles:")
     for profile_name in profile_list:
         print(f"\t{profile_name}")
 
-    return ret_status
-
-
-def _remove_profile(profile_name: str) -> Ret.CODE:
-    """ Removes a profile from the profile folder by name.
-
-    Args:
-        profile_name (str): Name of the profile to be removed.
-
-    Returns:
-        Ret.CODE: Status code indicating the success or failure of the profile removal.
-    """
-    ret_status = Ret.CODE.RET_OK
-
-    ProfileMgr().delete(profile_name)
-
-    return ret_status
+    return Ret.CODE.RET_OK
 
 
 def _update_profile(args) -> Ret.CODE:
-    """Updates an existing profile in the configuration using provided arguments.
+    """Updates the certificate of an existing profile in the store.
 
     Args:
         args (obj):  Object containing the command line arguments for the profile update.
@@ -378,16 +267,46 @@ def _update_profile(args) -> Ret.CODE:
     Returns:
         Ret.CODE: Status code indicating the success or failure of the profile update.
     """
-    ret_status = Ret.CODE.RET_OK
+    if args.cert is None:
+        LOG.warning(
+            "No update options provided. Use --cert to update the certificate.")
+        return Ret.CODE.RET_ERROR
 
-    # Update cert
-    if args.cert is not None:
-        profile_mgr = ProfileMgr()
-        ret_status = profile_mgr.load(args.profile_name)
+    profile_mgr = ProfileMgr()
+    ret_status = profile_mgr.load(args.profile_name)
 
-        if ret_status == Ret.CODE.RET_OK:
-            # profile exists
-            ret_status = profile_mgr.add_certificate(
-                args.profile_name, args.cert)
+    if ret_status == Ret.CODE.RET_OK:
+        ret_status = profile_mgr.add_certificate(args.profile_name, args.cert)
+
+    return ret_status
+
+
+def _show_profile(args) -> Ret.CODE:
+    """Prints the details of an existing profile.
+
+    Args:
+        args (obj):  Object containing the command line arguments for the show profile operation.
+
+    Returns:
+        Ret.CODE: Status code indicating the success or failure of the show profile operation.
+    """
+    profile_mgr = ProfileMgr()
+    ret_status = profile_mgr.load(args.profile_name)
+
+    if ret_status == Ret.CODE.RET_OK:
+        profile = cast(ProfileData, profile_mgr.loaded_profile)
+
+        print(f"Profile name: {profile.profile_name}")
+        print(f"Profile type: {profile.profile_type}")
+        print(f"Server URL:   {profile.server_url}")
+
+        if profile.token:
+            print(f"Token:        {profile.token}")
+        if profile.user:
+            print(f"User:         {profile.user}")
+        if profile.password:
+            print(f"Password:     {profile.password}")
+        if profile.cert_path:
+            print(f"Certificate:  {profile.cert_path}")
 
     return ret_status
