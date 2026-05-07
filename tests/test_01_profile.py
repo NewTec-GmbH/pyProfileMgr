@@ -40,7 +40,7 @@ import stat
 import pytest
 
 from pyProfileMgr.profile_data import ProfileType
-from pyProfileMgr.profile_mgr import ProfileMgr, DATA_FILE
+from pyProfileMgr.profile_mgr import ProfileMgr, DATA_FILE, TYPE_KEY, SERVER_URL_KEY, TOKEN_KEY
 from pyProfileMgr.ret import Ret
 
 
@@ -98,13 +98,15 @@ def test_add_profile(profile_mgr: ProfileMgr, monkeypatch):
     monkeypatch.setattr('builtins.input', lambda _: "y")
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.POLARION, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, TEST_CERT_PATH) is Ret.CODE.RET_OK
-    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
+    assert profile_mgr.loaded_profile and \
+        profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
 
     # TC: All OK - do not overwrite existing profile (type remains 'polarion').
     monkeypatch.setattr('builtins.input', lambda _: "n")
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
-    assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
+    assert profile_mgr.loaded_profile and \
+        profile_mgr.loaded_profile.profile_type == ProfileType.POLARION
 
 
 def test_add_certificate(profile_mgr: ProfileMgr):
@@ -120,10 +122,14 @@ def test_add_certificate(profile_mgr: ProfileMgr):
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
                            TEST_TOKEN, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
 
-    assert profile_mgr.add_certificate(TEST_PROFILE_NAME, os.path.dirname(os.path.realpath(__file__))
-                                       + "/test_data/doesnotexist.cert") is Ret.CODE.RET_ERROR_FILEPATH_INVALID
+    assert profile_mgr.add_certificate(TEST_PROFILE_NAME,
+                                       os.path.dirname(
+                                           os.path.realpath(__file__))
+                                       + "/test_data/doesnotexist.cert") \
+        is Ret.CODE.RET_ERROR_FILEPATH_INVALID
 
-    # TC: All OK - add an existing certificate to the profile and check if it was added successfully.
+    # TC: All OK - add an existing certificate to the profile
+    # and check if it was added successfully.
     assert profile_mgr.add_certificate(
         TEST_PROFILE_NAME, TEST_CERT_PATH) is Ret.CODE.RET_OK
     assert profile_mgr.loaded_profile and profile_mgr.loaded_profile.cert_path is not None
@@ -163,19 +169,59 @@ def test_add_token(profile_mgr: ProfileMgr):
     os.chmod(data_file_path, backup_permissions)
 
 
+def test_add_profile_write_failure(profile_mgr: ProfileMgr):
+    """Tests that creating a profile fails gracefully if the data file cannot be written."""
+
+    # Create the profile folder with a pre-existing read-only data file
+    # to force a write failure inside _add_new_profile.
+    profile_path = profile_mgr.profiles_folder + TEST_PROFILE_NAME + "/"
+    os.mkdir(profile_path)
+    data_file_path = profile_path + DATA_FILE
+
+    with open(data_file_path, 'w', encoding='UTF-8') as f:
+        f.write('{}')
+
+    backup_permissions = stat.S_IMODE(os.lstat(data_file_path).st_mode)
+    os.chmod(data_file_path, backup_permissions & NO_WRITING)
+
+    write_dict = {TYPE_KEY: str(
+        ProfileType.JIRA), SERVER_URL_KEY: TEST_SERVER, TOKEN_KEY: TEST_TOKEN}
+    assert profile_mgr._add_new_profile(  # pylint: disable=W0212
+        write_dict, TEST_PROFILE_NAME, None) is Ret.CODE.RET_ERROR_FILEPATH_INVALID
+
+    os.chmod(data_file_path, backup_permissions)
+
+
 def test_delete_profile(profile_mgr: ProfileMgr):
-    """Tests the deletion of a new profile."""
+    """Tests the removal of a profile."""
 
     # Add a new profile.
     assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
                            None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
 
-    # TC: Delete a profile and check that it was deleted successfully.
-    try:
-        profile_mgr.delete(TEST_PROFILE_NAME)
-    # pylint: disable=W0718
-    except Exception as exc:
-        pytest.fail(f"Unexpected exception: {exc}")
+    # TC: Delete the created profile.
+    assert profile_mgr.delete(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+
+    # TC: Deleting a non-existing profile returns an error.
+    assert profile_mgr.delete(TEST_PROFILE_NAME) is not Ret.CODE.RET_OK
+
+
+def test_list_profiles(profile_mgr: ProfileMgr):
+    """Tests the profile list command."""
+
+    # TC: Profile is not listed before it is created.
+    assert TEST_PROFILE_NAME not in profile_mgr.get_profiles()
+
+    # Add a new profile.
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.SUPERSET, TEST_SERVER,
+                           None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
+
+    # TC: Created profile appears in the list.
+    assert TEST_PROFILE_NAME in profile_mgr.get_profiles()
+
+    # TC: Deleted profile disappears from the list.
+    assert profile_mgr.delete(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert TEST_PROFILE_NAME not in profile_mgr.get_profiles()
 
 
 def test_loaded_profile_attributes(profile_mgr: ProfileMgr):
@@ -215,6 +261,28 @@ def test_loaded_profile_attributes(profile_mgr: ProfileMgr):
     # TC: Check that modification of the data is not possible.
     profile_mgr.loaded_profile.profile_name = "bogus"
     assert profile_mgr.loaded_profile.profile_name == TEST_PROFILE_NAME
+
+
+def test_load_profile(profile_mgr: ProfileMgr):
+    """Tests loading an existing profile."""
+
+    # TC: Loading a non-existing profile returns an error and leaves loaded_profile unset.
+    assert profile_mgr.load(
+        TEST_PROFILE_NAME) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+    assert profile_mgr.loaded_profile is None
+
+    # Add a profile and load it successfully (attribute details covered by
+    # test_loaded_profile_attributes).
+    assert profile_mgr.add(TEST_PROFILE_NAME, ProfileType.JIRA, TEST_SERVER,
+                           None, TEST_USER, TEST_PASSWORD, None) is Ret.CODE.RET_OK
+    assert profile_mgr.load(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert profile_mgr.loaded_profile is not None
+
+    # TC: Loading after deletion returns an error and clears loaded_profile.
+    assert profile_mgr.delete(TEST_PROFILE_NAME) is Ret.CODE.RET_OK
+    assert profile_mgr.load(
+        TEST_PROFILE_NAME) is Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+    assert profile_mgr.loaded_profile is None
 
 
 def test_invalid_type(profile_mgr: ProfileMgr):
