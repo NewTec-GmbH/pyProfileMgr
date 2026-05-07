@@ -48,10 +48,10 @@ def init_from_metadata():
 
     return \
         my_metadata['Version'], \
-        my_metadata['Author'], \
-        my_metadata['Author-email'], \
-        my_metadata['Project-URL'].replace("repository, ", ""), \
-        my_metadata['License']
+        my_metadata.get('Author', ''), \
+        my_metadata.get('Author-email', ''), \
+        (my_metadata.get('Project-URL') or '').replace("repository, ", ""), \
+        my_metadata.get('License', '')
 
 
 def init_from_toml():
