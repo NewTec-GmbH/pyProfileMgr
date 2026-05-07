@@ -56,8 +56,9 @@ _CMD_MODULES = [
 ]
 
 PROG_NAME = "pyProfileMgr"
-PROG_DESC = "A library containing the Profile Manager and providing a CLI for creating/updating/deleting profiles."
-PROG_COPYRIGHT = "Copyright (c) 2025 NewTec GmbH - " + __license__
+PROG_DESC = "A library containing the Profile Manager and providing a CLI to "\
+            "add, list, remove, update, and show profiles."
+PROG_COPYRIGHT = "Copyright (c) 2025 - 2026 NewTec GmbH - " + __license__
 PROG_GITHUB = "Find the project on GitHub: " + __repository__
 PROG_EPILOG = PROG_COPYRIGHT + " - " + PROG_GITHUB
 

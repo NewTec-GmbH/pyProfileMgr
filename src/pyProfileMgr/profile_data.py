@@ -60,7 +60,6 @@ from typing import Optional
 # Classes
 ################################################################################
 
-@dataclass
 class ProfileType(StrEnum):
     """ The profile types."""
     JIRA = 'jira'  # type: ignore

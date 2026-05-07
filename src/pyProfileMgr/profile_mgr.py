@@ -272,34 +272,39 @@ class ProfileMgr:
 
         return ret_status
 
-    def delete(self, profile_name: str) -> None:
+    def delete(self, profile_name: str) -> Ret.CODE:
         """ Deletes the profile with the specified name.
 
         The method will remove the profile folder and all its content.
 
         Args:
-            profile_name (str): _description_
+            profile_name (str): The name of the profile to delete.
+
+        Returns:
+            Ret.CODE: A status code indicating the result of the operation.
         """
         profile_path = self.profiles_storage_path + f"{profile_name}/"
 
-        if os.path.exists(profile_path):
-            if os.path.exists(profile_path + DATA_FILE):
-                os.remove(profile_path + DATA_FILE)
-
-            if os.path.exists(profile_path + CERT_FILE):
-                os.remove(profile_path + CERT_FILE)
-
-            os.rmdir(profile_path)
-
-            if self._loaded_profile_data and self._loaded_profile_data.profile_name == profile_name:
-                self._reset()
-
-            msg = f"Successfully removed profile '{profile_name}'."
-            LOG.info(msg)
-            print(msg)
-
-        else:
+        if not os.path.exists(profile_path):
             LOG.error("Folder for profile '%s' does not exist", profile_name)
+            return Ret.CODE.RET_ERROR_PROFILE_NOT_FOUND
+
+        if os.path.exists(profile_path + DATA_FILE):
+            os.remove(profile_path + DATA_FILE)
+
+        if os.path.exists(profile_path + CERT_FILE):
+            os.remove(profile_path + CERT_FILE)
+
+        os.rmdir(profile_path)
+
+        if self._loaded_profile_data and self._loaded_profile_data.profile_name == profile_name:
+            self._reset()
+
+        msg = f"Successfully removed profile '{profile_name}'."
+        LOG.info(msg)
+        print(msg)
+
+        return Ret.CODE.RET_OK
 
     def get_profiles(self) -> list[str]:
         """ Gets a list of all stored profiles.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyProfileMgr"
-version = "1.0.0"
+version = "1.2.0"
 description = "Library containing the Profile Manager."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -29,7 +29,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
   "pytest > 5.0.0",
-  "pytest-cov[all]"
+  "pytest-cov"
 ]
 
 [project.urls]

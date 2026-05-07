@@ -2,7 +2,7 @@
 
 pyProfileMgr is a Python module containing the Profile Manager component.
 
-It also provides CLI access for reading, writing, listing and updating profiles.
+It also provides CLI access for adding, listing, removing, updating and showing profiles.
 A profile contains server URL, type, credentials (token or username/password) and certificate data.
 
 [![License](https://img.shields.io/badge/license-bsd-3.svg)](https://choosealicense.com/licenses/bsd-3-clause/) [![Repo Status](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip) [![CI](https://github.com/NewTec-GmbH/pyProfileMgr/actions/workflows/test.yml/badge.svg)](https://github.com/NewTec-GmbH/pyProfileMgr/actions/workflows/test.yml)
@@ -12,6 +12,7 @@ A profile contains server URL, type, credentials (token or username/password) an
 - [Usage](#usage)
   - [Flags](#flags)
 - [Commands](#commands)
+- [SW Documentation](#sw-documentation)
 - [Used Libraries](#used-libraries)
 - [Issues, Ideas And Bugs](#issues-ideas-and-bugs)
 - [License](#license)
@@ -20,8 +21,6 @@ A profile contains server URL, type, credentials (token or username/password) an
 ## Overview
 
 ![overview](https://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/NewTec-GmbH/pyProfileMgr/main/doc/uml/overview.puml)
-
-More information on the deployment and architecture can be found in the [doc](./doc/README.md) folder.
 
 ## Installation
 
@@ -49,14 +48,19 @@ pyProfileMgr [-h] [--version] [-v] {command} ...
 
 | Command                                     | Description                                         |
 | :-----------------------------------------: | --------------------------------------------------- |
-|[profile](./doc/commands/profile.md)         | Add, list, delete or update server profiles.        |
+|[profile](./doc/commands/profile.md)         | Add, list, remove, update or show server profiles.  |
 
 ## SW Documentation
 
-More information on the deployment and architecture can be found in the [documentation](./doc/README.md)
+More information on the deployment and architecture can be found in the [documentation](./doc/README.md).
 
-For Detailed Software Design run `$ /doc/detailed-design/make html` to generate the detailed design documentation that then can be found
-in the folder `/doc/detailed-design/_build/html/index.html`
+For the Detailed Software Design, run the following command from the `doc/detailed-design` directory:
+
+```bash
+make html
+```
+
+The generated documentation can then be found in `doc/detailed-design/_build/html/index.html`.
 
 ## Used Libraries
 
@@ -65,8 +69,6 @@ Used 3rd party libraries which are not part of the standard Python package:
 | Library | Description | License |
 | ------- | ----------- | ------- |
 | [toml](https://github.com/uiri/toml) | Parsing [TOML](https://en.wikipedia.org/wiki/TOML) | MIT |
-
-Sections below, for Github only
 
 ## Issues, Ideas And Bugs
 
