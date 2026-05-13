@@ -7,7 +7,7 @@ name = "pyProfileMgr"
 version = "1.2.0"
 description = "Library containing the Profile Manager."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Stefan Vogel", email = "stefan.vogel@newtec.de" }
 ]
@@ -15,7 +15,6 @@ license = {text = "BSD 3-Clause"}
 classifiers = [
     "License :: OSI Approved :: BSD 3-Clause",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
